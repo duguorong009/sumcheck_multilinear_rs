@@ -1,3 +1,4 @@
+mod polynomial;
 
 #[test]
 fn dummy_test() {
