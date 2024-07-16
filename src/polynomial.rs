@@ -1,8 +1,12 @@
-use std::{collections::HashMap, ops::Add, str::FromStr};
+use std::{
+    collections::HashMap,
+    ops::{Add, Mul, Neg, Sub},
+};
 
 use num_bigint::BigUint;
 use num_traits::Zero;
 
+#[derive(Debug, Clone)]
 /// A Sparse Representation of a multi-linear polynomial.
 struct MVLinear {
     num_variables: usize,
@@ -35,7 +39,106 @@ impl MVLinear {
     }
 
     fn assert_same_type(&self, other: &MVLinear) {
-        assert_eq!(self.p, other.p, "The function being added is not in the same field.");
+        assert_eq!(
+            self.p, other.p,
+            "The function being added is not in the same field."
+        );
+    }
+}
+
+impl Add for MVLinear {
+    type Output = MVLinear;
+    fn add(self, other: MVLinear) -> MVLinear {
+        self.assert_same_type(&other);
+        let mut ans = self.clone();
+        ans.num_variables = self.num_variables.max(other.num_variables);
+        for (k, v) in other.terms {
+            if self.terms.contains_key(&k) {
+                ans.terms
+                    .insert(k, (self.terms.get(&k).unwrap() + v) % self.p.clone());
+                if ans.terms.get(&k).unwrap().is_zero() {
+                    ans.terms.remove(&k);
+                }
+            } else {
+                ans.terms.insert(k, v % self.p.clone());
+            }
+        }
+        ans
+    }
+}
+
+impl Sub for MVLinear {
+    type Output = MVLinear;
+    fn sub(self, other: MVLinear) -> MVLinear {
+        self.assert_same_type(&other);
+        let mut ans = self.clone();
+        ans.num_variables = self.num_variables.max(other.num_variables);
+        for (k, v) in other.terms {
+            if self.terms.contains_key(&k) {
+                ans.terms
+                    .insert(k, (self.terms.get(&k).unwrap() - v) % self.p.clone());
+                if ans.terms.get(&k).unwrap().is_zero() {
+                    ans.terms.remove(&k);
+                }
+            } else {
+                ans.terms.insert(k, self.p.clone() - v);
+            }
+        }
+        ans
+    }
+}
+
+impl Neg for MVLinear {
+    type Output = MVLinear;
+    fn neg(self) -> MVLinear {
+        let zero = MVLinear::new(
+            self.num_variables,
+            vec![(0b0, BigUint::zero())],
+            self.p.clone(),
+        );
+        zero - self
+    }
+}
+
+impl Mul for MVLinear {
+    type Output = MVLinear;
+    fn mul(self, other: MVLinear) -> MVLinear {
+        self.assert_same_type(&other);
+        let mut terms = HashMap::new();
+        // native n^2 poly multiplication where n is number of terms
+        for sk in self.terms.keys() {
+            for ok in other.terms.keys() {
+                if sk & ok > 0 {
+                    panic!("The product is no longer multi-linear function.")
+                }
+                let nk = sk + ok;
+                if terms.contains_key(&nk) {
+                    terms.insert(
+                        nk,
+                        (terms.get(&nk).unwrap()
+                            + self.terms.get(sk).unwrap() * other.terms.get(ok).unwrap())
+                            % self.p.clone(),
+                    );
+                } else {
+                    terms.insert(
+                        nk,
+                        self.terms.get(sk).unwrap() * other.terms.get(ok).unwrap() % self.p.clone(),
+                    );
+                }
+                if terms.get(&nk).unwrap().is_zero() {
+                    terms.remove(&nk);
+                }
+            }
+        }
+        let terms = terms.into_iter().collect();
+        MVLinear::new(self.num_variables.max(other.num_variables), terms, self.p)
+    }
+}
+
+impl PartialEq for MVLinear {
+    fn eq(&self, other: &MVLinear) -> bool {
+        let diff = self.clone() - other.clone();
+        diff.terms.is_empty()
     }
 }
 
@@ -98,4 +201,47 @@ fn test_mvlinear_new() {
         ])
     );
     // println!("p: {}", p);
+}
+
+#[test]
+fn test_mvlinear_add() {
+    let p1 = MVLinear::new(4, vec![(0b0000, 15u64.into())], 37u64.into());
+    let p2 = MVLinear::new(4, vec![(0b0001, 1u64.into())], 37u64.into());
+    let p3 = p1 + p2;
+    let expected = MVLinear::new(
+        4,
+        vec![(0b0000, 15u64.into()), (0b0001, 1u64.into())],
+        37u64.into(),
+    );
+    assert_eq!(p3, expected);
+}
+
+#[test]
+fn test_mvlinear_sub() {
+    let p1 = MVLinear::new(4, vec![(0b0000, 15u64.into())], 37u64.into());
+    let p2 = MVLinear::new(4, vec![(0b0001, 1u64.into())], 37u64.into());
+    let p3 = p1 - p2;
+    let expected = MVLinear::new(
+        4,
+        vec![(0b0000, 15u64.into()), (0b0001, 36u64.into())],
+        37u64.into(),
+    );
+    assert_eq!(p3, expected);
+}
+
+#[test]
+fn test_mvlinear_neg() {
+    let p1 = MVLinear::new(4, vec![(0b0000, 15u64.into())], 37u64.into());
+    let p2 = -p1;
+    let expected = MVLinear::new(4, vec![(0b0000, 22u64.into())], 37u64.into());
+    assert_eq!(p2, expected);
+}
+
+#[test]
+fn test_mvlinear_mul() {
+    let p1 = MVLinear::new(4, vec![(0b0000, 15u64.into())], 37u64.into());
+    let p2 = MVLinear::new(4, vec![(0b0001, 1u64.into())], 37u64.into());
+    let p3 = p1 * p2;
+    let expected = MVLinear::new(4, vec![(0b0001, 15u64.into())], 37u64.into());
+    assert_eq!(p3, expected);
 }
