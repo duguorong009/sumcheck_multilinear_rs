@@ -1,4 +1,4 @@
-use std::{collections::HashMap, str::FromStr};
+use std::{collections::HashMap, ops::Add, str::FromStr};
 
 use num_bigint::BigUint;
 use num_traits::Zero;
@@ -32,6 +32,10 @@ impl MVLinear {
             terms,
             p,
         }
+    }
+
+    fn assert_same_type(&self, other: &MVLinear) {
+        assert_eq!(self.p, other.p, "The function being added is not in the same field.");
     }
 }
 
