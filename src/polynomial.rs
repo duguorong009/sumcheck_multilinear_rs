@@ -131,6 +131,26 @@ impl MVLinear {
             self.p.clone(),
         )
     }
+
+    /// Remove redundant unused variable from right.
+    ///
+    /// `n`: number of variables to collapse
+    fn collapse_right(&self, n: usize) -> MVLinear {
+        let mut new_terms = HashMap::new();
+        let mask = ((1 << n) - 1) << (self.num_variables - n);
+        let anti_mask = (1 << (self.num_variables - n)) - 1;
+        for (t, v) in self.terms.iter() {
+            if t & mask > 0 {
+                panic!("Cannot collapse: Variable exist.");
+            }
+            new_terms.insert(t & anti_mask, v.clone());
+        }
+        MVLinear::new(
+            self.num_variables - n,
+            new_terms.into_iter().collect(),
+            self.p.clone(),
+        )
+    }
 }
 
 impl Add for MVLinear {
