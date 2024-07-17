@@ -377,3 +377,24 @@ fn test_mvlinear_eval_bin() {
     let expected = 15u64.into();
     assert_eq!(p1.eval_bin(0b1110), expected);
 }
+
+#[test]
+fn test_mvlinear_collpase() {
+    // right collpase: remove x3, x2, x1
+    let p1 = MVLinear::new(
+        4,
+        vec![(0b0000, 15u64.into()), (0b0001, 1u64.into())],
+        37u64.into(),
+    );
+    let expected = MVLinear::new(
+        1,
+        vec![(0b0000, 15u64.into()), (0b0001, 1u64.into())],
+        37u64.into(),
+    );
+    assert_eq!(p1.collapse_right(3), expected);
+
+    // left collpase: remove x0, x1, x2
+    let p1 = MVLinear::new(4, vec![(0b1000, 15u64.into())], 37u64.into());
+    let expected = MVLinear::new(1, vec![(0b0001, 15u64.into())], 37u64.into());
+    assert_eq!(p1.collapse_left(3), expected);
+}
