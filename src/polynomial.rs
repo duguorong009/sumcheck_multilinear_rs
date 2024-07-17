@@ -44,6 +44,27 @@ impl MVLinear {
             "The function being added is not in the same field."
         );
     }
+
+    fn eval(&self, at: Vec<BigUint>) -> BigUint {
+        let mut s = BigUint::zero();
+        for &term in self.terms.keys() {
+            let mut term = term;
+            let mut i = 0;
+            let mut val = self.terms.get(&term).unwrap().clone();
+            while term != 0 {
+                if term & 1 == 1 {
+                    val = (val * (at[i].clone() % self.p.clone())) % self.p.clone();
+                }
+                if val.is_zero() {
+                    break;
+                }
+                term >>= 1;
+                i += 1;
+            }
+            s = (s + val) % self.p.clone();
+        }
+        s
+    }
 }
 
 impl Add for MVLinear {
@@ -244,4 +265,16 @@ fn test_mvlinear_mul() {
     let p3 = p1 * p2;
     let expected = MVLinear::new(4, vec![(0b0001, 15u64.into())], 37u64.into());
     assert_eq!(p3, expected);
+}
+
+#[test]
+fn test_mvlinear_eval() {
+    let p1 = MVLinear::new(
+        4,
+        vec![(0b0000, 15u64.into()), (0b0001, 1u64.into())],
+        37u64.into(),
+    );
+    let at = vec![1u64.into(), 1u64.into(), 1u64.into(), 1u64.into()];
+    let expected = (15u64 + 1u64).into();
+    assert_eq!(p1.eval(at), expected);
 }
