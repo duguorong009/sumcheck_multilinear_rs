@@ -81,6 +81,37 @@ impl MVLinear {
         }
         self.eval(args)
     }
+
+    /// Evaluate part of the arguments of the multilinear polynomial.
+    ///
+    /// `args`: arguments at beginning
+    fn eval_part(&self, args: Vec<BigUint>) -> MVLinear {
+        let s = args.len();
+        if s > self.num_variables {
+            panic!("len(args) > self.num_variables");
+        }
+        let mut new_terms = HashMap::new();
+        for (t, v) in self.terms.iter() {
+            let mut t = t.clone();
+            let mut v = v.clone();
+            for k in 0..s {
+                if t & (1 << k) > 0 {
+                    v = v * (args[k].clone() % self.p.clone()) % self.p.clone();
+                    t &= !(1 << k);
+                }
+            }
+            let t_shifted = t >> s;
+            new_terms.insert(
+                t_shifted,
+                (new_terms.get(&t_shifted).unwrap_or(&0u64.into()) + v) % self.p.clone(),
+            );
+        }
+        MVLinear::new(
+            self.num_variables - args.len(),
+            new_terms.into_iter().collect(),
+            self.p.clone(),
+        )
+    }
 }
 
 impl Add for MVLinear {
