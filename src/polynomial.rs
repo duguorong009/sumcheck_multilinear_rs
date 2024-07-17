@@ -4,7 +4,7 @@ use std::{
 };
 
 use num_bigint::BigUint;
-use num_traits::Zero;
+use num_traits::{One, Zero};
 
 #[derive(Debug, Clone)]
 /// A Sparse Representation of a multi-linear polynomial.
@@ -64,6 +64,22 @@ impl MVLinear {
             s = (s + val) % self.p.clone();
         }
         s
+    }
+
+    /// Evaluate the polynomial where the arguments are in {0, 1}. The ith argument is the ith bit of the polynomial.
+    ///
+    /// `at`: polynomial argument in binary form
+    fn eval_bin(&self, at: usize) -> BigUint {
+        if at > 2usize.pow(self.num_variables.try_into().unwrap()) {
+            panic!("Number of varialbes is larger than expected")
+        }
+        let mut args = vec![BigUint::zero(); self.num_variables];
+        for i in 0..self.num_variables {
+            if at & (1 << i) > 0 {
+                args[i] = BigUint::one();
+            }
+        }
+        self.eval(args)
     }
 }
 
@@ -277,4 +293,17 @@ fn test_mvlinear_eval() {
     let at = vec![1u64.into(), 1u64.into(), 1u64.into(), 1u64.into()];
     let expected = (15u64 + 1u64).into();
     assert_eq!(p1.eval(at), expected);
+}
+
+#[test]
+fn test_mvlinear_eval_bin() {
+    let p1 = MVLinear::new(
+        4,
+        vec![(0b0000, 15u64.into()), (0b0001, 1u64.into())],
+        37u64.into(),
+    );
+    let expected = (15u64 + 1u64).into();
+    assert_eq!(p1.eval_bin(0b0001), expected);
+    let expected = 15u64.into();
+    assert_eq!(p1.eval_bin(0b1110), expected);
 }
