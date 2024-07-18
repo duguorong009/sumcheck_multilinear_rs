@@ -310,8 +310,9 @@ pub fn random_prime(bit_length: usize) -> BigUint {
 fn random_MVLinear(
     num_variables: usize,
     prime: Option<BigUint>,
-    prime_bit_length: usize,
+    prime_bit_length: Option<usize>,
 ) -> MVLinear {
+    let prime_bit_length = prime_bit_length.unwrap_or(128);
     let num_terms = 2_usize.pow(num_variables as u32);
     let p = match prime {
         Some(p) => p,
