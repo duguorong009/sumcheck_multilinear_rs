@@ -3,8 +3,12 @@ use std::{
     ops::{Add, Mul, Neg, Sub},
 };
 
-use num_bigint::BigUint;
+use num_bigint::{BigUint, RandBigInt};
 use num_traits::{One, Zero};
+use rand::{
+    distributions::{Distribution, Uniform},
+    Rng,
+};
 
 #[derive(Debug, Clone)]
 /// A Sparse Representation of a multi-linear polynomial.
@@ -289,6 +293,44 @@ pub fn make_MVLinear_constructor(
     p: BigUint,
 ) -> impl Fn(Vec<(usize, BigUint)>) -> MVLinear {
     move |terms: Vec<(usize, BigUint)>| MVLinear::new(num_variables, terms, p.clone())
+}
+
+// Function to generate a random prime number of a given bit length
+pub fn random_prime(bit_length: usize) -> BigUint {
+    let mut rng = rand::thread_rng();
+    loop {
+        let prime_candidate = rng.gen_biguint(bit_length.try_into().unwrap());
+        if is_prime::is_prime(&prime_candidate.to_str_radix(10)) {
+            return prime_candidate;
+        }
+    }
+}
+
+// Function to create a random MVLinear
+fn random_MVLinear(
+    num_variables: usize,
+    prime: Option<BigUint>,
+    prime_bit_length: usize,
+) -> MVLinear {
+    let num_terms = 2_usize.pow(num_variables as u32);
+    let p = match prime {
+        Some(p) => p,
+        None => random_prime(prime_bit_length), // Ensure the prime fits in usize
+    };
+
+    let mv_linear_constructor = make_MVLinear_constructor(num_variables, p.clone());
+    let mut terms = HashMap::new();
+    let mut rng = rand::thread_rng();
+    let range = Uniform::from(0..num_terms);
+
+    for _ in 0..num_terms {
+        terms.insert(
+            range.sample(&mut rng),
+            rng.gen_biguint_range(&0u64.into(), &p),
+        );
+    }
+
+    mv_linear_constructor(terms.into_iter().collect())
 }
 
 #[test]
