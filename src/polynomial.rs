@@ -283,6 +283,14 @@ impl std::fmt::Display for MVLinear {
     }
 }
 
+/// Return a function that outputs MVLinear.
+pub fn make_MVLinear_constructor(
+    num_variables: usize,
+    p: BigUint,
+) -> impl Fn(Vec<(usize, BigUint)>) -> MVLinear {
+    move |terms: Vec<(usize, BigUint)>| MVLinear::new(num_variables, terms, p.clone())
+}
+
 #[test]
 fn test_mvlinear_new() {
     // P(x0, x1, x2, x3) = 15 + x0 + 4 * x3 + x1 * x2 + 5 * x2 * x3 (in Z_37)
