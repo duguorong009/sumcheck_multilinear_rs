@@ -1,5 +1,5 @@
-mod polynomial;
 mod multilinear_extension;
+mod polynomial;
 
 #[test]
 fn dummy_test() {

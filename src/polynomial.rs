@@ -12,11 +12,11 @@ use rand::distributions::{Distribution, Uniform};
 pub struct MVLinear {
     num_variables: usize,
     pub(crate) terms: HashMap<usize, BigUint>,
-    p: BigUint,
+    pub(crate) p: BigUint,
 }
 
 impl MVLinear {
-    fn new(num_variables: usize, term: Vec<(usize, BigUint)>, p: BigUint) -> MVLinear {
+    pub fn new(num_variables: usize, term: Vec<(usize, BigUint)>, p: BigUint) -> MVLinear {
         let mut terms = HashMap::new();
         for (k, v) in term {
             if k >> num_variables > 0 {
