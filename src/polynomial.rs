@@ -1,6 +1,6 @@
 use std::{
     collections::HashMap,
-    ops::{Add, Mul, Neg, Sub},
+    ops::{Add, Mul, MulAssign, Neg, Sub},
 };
 
 use num_bigint::{BigUint, RandBigInt};
@@ -252,6 +252,12 @@ impl Sub<MVLinear> for u64 {
             other.p.clone(),
         );
         t - other
+    }
+}
+
+impl MulAssign for MVLinear {
+    fn mul_assign(&mut self, other: MVLinear) {
+        *self = self.clone() * other;
     }
 }
 
