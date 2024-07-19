@@ -243,6 +243,18 @@ impl Mul for MVLinear {
     }
 }
 
+impl Sub<MVLinear> for u64 {
+    type Output = MVLinear;
+    fn sub(self, other: MVLinear) -> MVLinear {
+        let t = MVLinear::new(
+            other.num_variables,
+            vec![(0b0, BigUint::from(self))],
+            other.p.clone(),
+        );
+        t - other
+    }
+}
+
 impl PartialEq for MVLinear {
     fn eq(&self, other: &MVLinear) -> bool {
         let diff = self.clone() - other.clone();
