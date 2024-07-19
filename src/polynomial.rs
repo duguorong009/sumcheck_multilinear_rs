@@ -5,16 +5,13 @@ use std::{
 
 use num_bigint::{BigUint, RandBigInt};
 use num_traits::{One, Zero};
-use rand::{
-    distributions::{Distribution, Uniform},
-    Rng,
-};
+use rand::distributions::{Distribution, Uniform};
 
 #[derive(Debug, Clone)]
 /// A Sparse Representation of a multi-linear polynomial.
-struct MVLinear {
+pub struct MVLinear {
     num_variables: usize,
-    terms: HashMap<usize, BigUint>,
+    pub(crate) terms: HashMap<usize, BigUint>,
     p: BigUint,
 }
 
