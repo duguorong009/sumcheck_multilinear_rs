@@ -117,3 +117,42 @@ pub fn evaluate(data: Vec<BigUint>, arguments: Vec<usize>, field_size: BigUint) 
     }
     a[0].clone()
 }
+
+/// Sparse version of the function `evaluate`. The function also takes linear time to the size of the data.
+///
+/// `data`: dictionary indicating a map between binary argument and its value (sparse bookkeeping table)
+/// `arguments`: Input argument
+/// `field_size`: The size of the finite field that the array value belongs.
+pub fn evaluate_sparse(
+    data: Vec<(usize, BigUint)>,
+    arguments: Vec<usize>,
+    field_size: BigUint,
+) -> BigUint {
+    let l = arguments.len();
+    let p = field_size;
+
+    let mut dp0 = data;
+    let mut dp1: HashMap<usize, BigUint> = HashMap::new();
+    for i in 0..l {
+        let r = arguments[i];
+        for (k, v) in dp0 {
+            if !dp1.contains_key(&(k >> 1)) {
+                dp1.insert(k >> 1, 0u64.into());
+            }
+            if k & 1 == 0 {
+                dp1.insert(
+                    k >> 1,
+                    (dp1.get(&(k >> 1)).unwrap() + v * (1 - r)) % p.clone(),
+                );
+            } else {
+                dp1.insert(k >> 1, (dp1.get(&(k >> 1)).unwrap() + v * r) % p.clone());
+            }
+        }
+        dp0 = dp1.into_iter().collect();
+        dp1 = HashMap::new();
+    }
+    dp0.into_iter()
+        .find(|(k, _)| *k == 0)
+        .map(|(_, v)| v)
+        .unwrap_or_default()
+}
