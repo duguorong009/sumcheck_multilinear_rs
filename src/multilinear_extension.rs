@@ -93,3 +93,27 @@ fn _product1mx(xs: &[MVLinear], lo: usize, hi: usize) -> MVLinear {
     }
     MVLinear::new(0, vec![(0b0000, 1u64.into())], xs[0].p.clone())
 }
+
+/// Directly evaluate a polynomial based on multilinear extension. The function takes linear time to the size of the data.
+///
+/// `data`: The bookkeeping table (where the multilinear extension is based on)
+/// `arguments`: Input argument
+/// `field_size`: The size of the finite field that the array value belongs.
+pub fn evaluate(data: Vec<BigUint>, arguments: Vec<usize>, field_size: BigUint) -> BigUint {
+    let l = arguments.len();
+    let p = field_size;
+    assert!(data.len() <= (1 << l));
+
+    let mut a = data;
+    if a.len() < (1 << l) {
+        a.resize(1 << l, 0u64.into());
+    }
+
+    for i in 1..l + 1 {
+        let r = arguments[i - 1];
+        for b in 0..2usize.pow((l - i).try_into().unwrap()) {
+            a[b] = (a[b << 1].clone() * (1 - r) + a[(b << 1) + 1].clone() * r) % p.clone();
+        }
+    }
+    a[0].clone()
+}
