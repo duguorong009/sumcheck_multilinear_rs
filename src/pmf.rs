@@ -94,6 +94,13 @@ impl DummyPMF {
     }
 }
 
+impl Mul<MVLinear> for DummyPMF {
+    type Output = DummyPMF;
+    fn mul(self, _rhs: MVLinear) -> DummyPMF {
+        unimplemented!("Dummy PMF");
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
