@@ -1,17 +1,20 @@
+use std::ops::Mul;
+
 use num_bigint::BigUint;
 use num_traits::One;
 
 use crate::polynomial::MVLinear;
 
 /// Product of multilinear functions.
-struct PMF {
+#[derive(Debug, Clone)]
+pub struct PMF {
     num_variables: usize,
     pub(crate) p: BigUint,
-    multiplicands: Vec<MVLinear>,
+    pub(crate) multiplicands: Vec<MVLinear>,
 }
 
 impl PMF {
-    fn new(multiplicands: Vec<MVLinear>) -> PMF {
+    pub fn new(multiplicands: Vec<MVLinear>) -> PMF {
         if multiplicands.is_empty() {
             panic!("Multiplicands are empty.");
         }
@@ -40,6 +43,15 @@ impl PMF {
             s = (s * poly.eval(at.clone())) % self.p.clone();
         }
         s
+    }
+}
+
+impl Mul<MVLinear> for PMF {
+    type Output = PMF;
+    fn mul(self, rhs: MVLinear) -> PMF {
+        let mut multiplicands = self.multiplicands.clone();
+        multiplicands.push(rhs);
+        PMF::new(multiplicands)
     }
 }
 

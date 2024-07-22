@@ -7,6 +7,8 @@ use num_bigint::{BigUint, RandBigInt};
 use num_traits::{One, Zero};
 use rand::distributions::{Distribution, Uniform};
 
+use crate::pmf::PMF;
+
 #[derive(Debug, Clone)]
 /// A Sparse Representation of a multi-linear polynomial.
 pub struct MVLinear {
@@ -258,6 +260,15 @@ impl Sub<MVLinear> for u64 {
 impl MulAssign for MVLinear {
     fn mul_assign(&mut self, other: MVLinear) {
         *self = self.clone() * other;
+    }
+}
+
+impl Mul<PMF> for MVLinear {
+    type Output = PMF;
+    fn mul(self, rhs: PMF) -> PMF {
+        let mut multiplicands = rhs.multiplicands.clone();
+        multiplicands.push(self);
+        PMF::new(multiplicands)
     }
 }
 
