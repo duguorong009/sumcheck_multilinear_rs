@@ -10,7 +10,7 @@ use rand::distributions::{Distribution, Uniform};
 #[derive(Debug, Clone)]
 /// A Sparse Representation of a multi-linear polynomial.
 pub struct MVLinear {
-    num_variables: usize,
+    pub(crate) num_variables: usize,
     pub(crate) terms: HashMap<usize, BigUint>,
     pub(crate) p: BigUint,
 }
@@ -46,7 +46,7 @@ impl MVLinear {
         );
     }
 
-    fn eval(&self, at: Vec<BigUint>) -> BigUint {
+    pub fn eval(&self, at: Vec<BigUint>) -> BigUint {
         let mut s = BigUint::zero();
         for &term in self.terms.keys() {
             let mut term = term;
