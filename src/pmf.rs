@@ -1,4 +1,4 @@
-use std::{fmt::Display, ops::Mul};
+use std::{clone, fmt::Display, ops::Mul};
 
 use num_bigint::BigUint;
 use num_traits::One;
@@ -65,6 +65,32 @@ impl Display for PMF {
         }
         s += "]";
         write!(f, "{}", s)
+    }
+}
+
+#[derive(Debug, Clone)]
+pub struct DummyPMF {
+    num_multiplicands: usize,
+    num_variables: usize,
+    pub(crate) p: BigUint,
+}
+
+impl DummyPMF {
+    pub fn new(num_multiplicands: usize, num_variables: usize, p: BigUint) -> DummyPMF {
+        // let _pmf: PMF = PMF::new(vec![MVLinear::new(num_variables, vec![], p.clone())]);
+        DummyPMF {
+            num_multiplicands,
+            num_variables,
+            p,
+        }
+    }
+
+    pub fn num_multiplicands(&self) -> usize {
+        self.num_multiplicands
+    }
+
+    pub fn eval(&self, at: Vec<BigUint>) -> BigUint {
+        unimplemented!("Dummy PMF Evaluated.")
     }
 }
 
