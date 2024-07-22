@@ -1,4 +1,4 @@
-use std::ops::Mul;
+use std::{fmt::Display, ops::Mul};
 
 use num_bigint::BigUint;
 use num_traits::One;
@@ -52,6 +52,19 @@ impl Mul<MVLinear> for PMF {
         let mut multiplicands = self.multiplicands.clone();
         multiplicands.push(rhs);
         PMF::new(multiplicands)
+    }
+}
+
+impl Display for PMF {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+        let mut s = String::new();
+        s += "Product[";
+        for poly in &self.multiplicands {
+            s += format!("{}", poly).as_str();
+            s += ",";
+        }
+        s += "]";
+        write!(f, "{}", s)
     }
 }
 
