@@ -9,7 +9,7 @@ use crate::polynomial::{make_MVLinear_constructor, MVLinear};
 /// `data`: Array of size 2^l. If the size of array is not power of 2, out-of-range part will be arbitrary.
 /// `field_size`: The size of the finite field that the array value belongs.
 ///
-pub fn extend(data: Vec<usize>, field_size: BigUint) -> MVLinear {
+pub fn extend(data: Vec<BigUint>, field_size: BigUint) -> MVLinear {
     let l = (data.len() as f64).log2().ceil() as usize;
     let p = field_size;
     let gen = make_MVLinear_constructor(l, p.clone());
@@ -24,11 +24,11 @@ pub fn extend(data: Vec<usize>, field_size: BigUint) -> MVLinear {
         .collect();
 
     for b in 0..data.len() {
-        let mut sub_poly = gen(vec![(b, data[b].into())]);
+        let mut sub_poly = gen(vec![(b, data[b].clone())]);
         let xi0 = {
             let mut xi0 = vec![];
             for i in 0..l {
-                if b & (1 << i) > 0 {
+                if (b >> i) & 1 == 0 {
                     xi0.push(x[i].clone());
                 }
             }
