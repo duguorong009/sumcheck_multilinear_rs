@@ -91,7 +91,7 @@ fn _product1mx(xs: &[MVLinear], lo: usize, hi: usize) -> MVLinear {
         let right = _product1mx(xs, lo + (hi - lo) / 2, hi);
         return left * right;
     }
-    MVLinear::new(0, vec![(0b0000, 1u64.into())], xs[0].p.clone())
+    MVLinear::new(xs[0].num_variables, vec![(0b0000, 1u64.into())], xs[0].p.clone())
 }
 
 /// Directly evaluate a polynomial based on multilinear extension. The function takes linear time to the size of the data.
