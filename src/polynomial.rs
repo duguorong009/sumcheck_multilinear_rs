@@ -72,7 +72,7 @@ impl MVLinear {
     /// Evaluate the polynomial where the arguments are in {0, 1}. The ith argument is the ith bit of the polynomial.
     ///
     /// `at`: polynomial argument in binary form
-    fn eval_bin(&self, at: usize) -> BigUint {
+    pub fn eval_bin(&self, at: usize) -> BigUint {
         if at > 2usize.pow(self.num_variables.try_into().unwrap()) {
             panic!("Number of varialbes is larger than expected")
         }
