@@ -67,7 +67,7 @@ pub fn extend_sparse(data: Vec<(usize, BigUint)>, num_var: usize, field_size: Bi
         let xi0 = {
             let mut xi0 = vec![];
             for i in 0..l {
-                if b & (1 << i) > 0 {
+                if (b >> i) & 1 == 0 {
                     xi0.push(x[i].clone());
                 }
             }
