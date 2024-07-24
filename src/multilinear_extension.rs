@@ -9,7 +9,7 @@ use crate::polynomial::{make_MVLinear_constructor, MVLinear};
 /// `data`: Array of size 2^l. If the size of array is not power of 2, out-of-range part will be arbitrary.
 /// `field_size`: The size of the finite field that the array value belongs.
 ///
-pub fn extend(data: Vec<BigUint>, field_size: BigUint) -> MVLinear {
+pub fn extend(data: &[BigUint], field_size: BigUint) -> MVLinear {
     let l = (data.len() as f64).log2().ceil() as usize;
     let p = field_size;
     let gen = make_MVLinear_constructor(l, p.clone());
@@ -48,7 +48,7 @@ pub fn extend(data: Vec<BigUint>, field_size: BigUint) -> MVLinear {
 /// `data`: sparse map if index < 2^L. If the size of the array is not power of 2, out-of-range part will be arbitrary.
 /// `num_var`: number of variables
 /// `field_size`: The size of the finite field that the array value belongs.
-pub fn extend_sparse(data: Vec<(usize, BigUint)>, num_var: usize, field_size: BigUint) -> MVLinear {
+pub fn extend_sparse(data: &[(usize, BigUint)], num_var: usize, field_size: BigUint) -> MVLinear {
     let l = num_var;
     let p = field_size;
     let gen = make_MVLinear_constructor(l, p.clone());
@@ -63,7 +63,7 @@ pub fn extend_sparse(data: Vec<(usize, BigUint)>, num_var: usize, field_size: Bi
         .collect();
 
     for (b, vb) in data {
-        let sub_poly = gen(vec![(b, vb)]);
+        let sub_poly = gen(vec![(*b, vb.clone())]);
         let xi0 = {
             let mut xi0 = vec![];
             for i in 0..l {
@@ -99,12 +99,12 @@ fn _product1mx(xs: &[MVLinear], lo: usize, hi: usize) -> MVLinear {
 /// `data`: The bookkeeping table (where the multilinear extension is based on)
 /// `arguments`: Input argument
 /// `field_size`: The size of the finite field that the array value belongs.
-pub fn evaluate(data: Vec<BigUint>, arguments: Vec<BigUint>, field_size: BigUint) -> BigUint {
+pub fn evaluate(data: &[BigUint], arguments: &[BigUint], field_size: BigUint) -> BigUint {
     let l = arguments.len();
     let p = field_size;
     assert!(data.len() <= (1 << l));
 
-    let mut a = data;
+    let mut a = data.to_vec();
     if a.len() < (1 << l) {
         a.resize(1 << l, 0u64.into());
     }
@@ -124,14 +124,14 @@ pub fn evaluate(data: Vec<BigUint>, arguments: Vec<BigUint>, field_size: BigUint
 /// `arguments`: Input argument
 /// `field_size`: The size of the finite field that the array value belongs.
 pub fn evaluate_sparse(
-    data: Vec<(usize, BigUint)>,
-    arguments: Vec<BigUint>,
+    data: &[(usize, BigUint)],
+    arguments: &[BigUint],
     field_size: BigUint,
 ) -> BigUint {
     let l = arguments.len();
     let p = field_size;
 
-    let mut dp0 = data;
+    let mut dp0 = data.to_vec();
     let mut dp1: HashMap<usize, BigUint> = HashMap::new();
     for i in 0..l {
         let r = arguments[i].clone();
@@ -155,4 +155,80 @@ pub fn evaluate_sparse(
         .find(|(k, _)| *k == 0)
         .map(|(_, v)| v)
         .unwrap_or_default()
+}
+
+#[cfg(test)]
+mod tests {
+    use num_bigint::RandBigInt;
+    use rand::Rng;
+
+    use crate::polynomial::random_prime;
+
+    use super::*;
+
+    #[test]
+    fn test_extend() {
+        // Create a random number generator
+        let mut rng = rand::thread_rng();
+        
+        for t in 0..1 {
+            let p = random_prime(64);
+            println!("Test #{t}... P : {p:?}");
+            let arr: Vec<BigUint> = (0..1024).map(|_| rng.gen_biguint_range(&0u64.into(), &p)).collect();
+            let poly = extend(&arr, p.clone());
+            for _ in 0..poly.num_variables.pow(2) {
+                let i = rng.gen_range(0..arr.len());
+                assert!(arr[i] == poly.eval_bin(i));
+            }
+            println!("Test #{} passed", t);
+        }
+    }
+
+    #[test]
+    fn test_extend_sparse() {
+        let mut rng = rand::thread_rng();
+
+        for t in 0..1 {
+            let p = random_prime(64);
+            let l = 10;
+            let data: HashMap<usize, BigUint> = (0..256).map(|_| (rng.gen_range(0..1 << l), rng.gen_biguint_range(&0u64.into(), &p))).collect();
+            let data_vec: Vec<(usize, BigUint)> = data.clone().into_iter().collect();
+            let poly = extend_sparse(&data_vec, l, p.clone());
+            for k in 0..1 << l {
+                let zero = 0u64.into();
+                let expected = data.get(&k).unwrap_or(&zero);
+                let actual = poly.eval_bin(k);
+                assert!(*expected == actual);
+            }
+            println!("Test #{} passed", t);
+        }
+    }
+
+    #[test]
+    fn test_evaluate() {
+        let mut rng = rand::thread_rng();
+
+        for _ in 0..1 {
+            let p = random_prime(64);
+            let l = 8;
+            let arr: Vec<BigUint> = (0..1 << l).map(|_| rng.gen_biguint_range(&0u64.into(), &p)).collect();
+            let poly = extend(&arr, p.clone());
+            let args: Vec<BigUint> = (0..l).map(|_| rng.gen_biguint_range(&0u64.into(), &p)).collect();
+            assert!(poly.eval(&args) == evaluate(&arr, &args, p));
+        }
+    }
+
+    #[test]
+    fn test_evaluate_sparse() {
+        let mut rng = rand::thread_rng();
+        for _ in 0..1 {
+            let p = random_prime(64);
+            let l = 9;
+            let data: HashMap<usize, BigUint> = (0..1 << 3).map(|_| (rng.gen_range(0..1 << l), rng.gen_biguint_range(&0u64.into(), &p))).collect();
+            let data_vec: Vec<(usize, BigUint)> = data.clone().into_iter().collect();
+            let poly = extend_sparse(&data_vec, l, p.clone());
+            let args: Vec<BigUint> = (0..l).map(|_| rng.gen_biguint_range(&0u64.into(), &p)).collect();
+            assert!(poly.eval(&args) == evaluate_sparse(&data_vec, &args, p));
+        }
+    }
 }
