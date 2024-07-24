@@ -37,10 +37,10 @@ impl PMF {
         self.multiplicands.len()
     }
 
-    fn eval(&self, at: Vec<BigUint>) -> BigUint {
+    fn eval(&self, at: &[BigUint]) -> BigUint {
         let mut s = BigUint::one();
         for poly in &self.multiplicands {
-            s = (s * poly.eval(at.clone())) % self.p.clone();
+            s = (s * poly.eval(at)) % self.p.clone();
         }
         s
     }
@@ -89,7 +89,7 @@ impl DummyPMF {
         self.num_multiplicands
     }
 
-    pub fn eval(&self, at: Vec<BigUint>) -> BigUint {
+    pub fn eval(&self, _at: &[BigUint]) -> BigUint {
         unimplemented!("Dummy PMF Evaluated.")
     }
 }
@@ -113,6 +113,6 @@ mod tests {
             2u64.into(),
         )]);
         pmf.p = 7u64.into();
-        assert_eq!(pmf.eval(vec![0u64.into()]), 1u64.into());
+        assert_eq!(pmf.eval(&[0u64.into()]), 1u64.into());
     }
 }

@@ -5,7 +5,7 @@ use std::{
 
 use num_bigint::{BigUint, RandBigInt};
 use num_traits::{One, Zero};
-use rand::{distributions::{Distribution, Uniform}, rngs::OsRng};
+use rand::distributions::{Distribution, Uniform};
 
 use crate::pmf::PMF;
 
@@ -48,7 +48,7 @@ impl MVLinear {
         );
     }
 
-    pub fn eval(&self, at: Vec<BigUint>) -> BigUint {
+    pub fn eval(&self, at: &[BigUint]) -> BigUint {
         let mut s = BigUint::zero();
         for &term in self.terms.keys() {
             let mut term = term;
@@ -82,13 +82,13 @@ impl MVLinear {
                 args[i] = BigUint::one();
             }
         }
-        self.eval(args)
+        self.eval(&args)
     }
 
     /// Evaluate part of the arguments of the multilinear polynomial.
     ///
     /// `args`: arguments at beginning
-    fn eval_part(&self, args: Vec<BigUint>) -> MVLinear {
+    fn eval_part(&self, args: &[BigUint]) -> MVLinear {
         let s = args.len();
         if s > self.num_variables {
             panic!("len(args) > self.num_variables");
@@ -438,7 +438,7 @@ fn test_mvlinear_eval() {
     );
     let at = vec![1u64.into(), 1u64.into(), 1u64.into(), 1u64.into()];
     let expected = (15u64 + 1u64).into();
-    assert_eq!(p1.eval(at), expected);
+    assert_eq!(p1.eval(&at), expected);
 }
 
 #[test]
