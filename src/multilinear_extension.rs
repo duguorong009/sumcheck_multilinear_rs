@@ -99,7 +99,7 @@ fn _product1mx(xs: &[MVLinear], lo: usize, hi: usize) -> MVLinear {
 /// `data`: The bookkeeping table (where the multilinear extension is based on)
 /// `arguments`: Input argument
 /// `field_size`: The size of the finite field that the array value belongs.
-pub fn evaluate(data: Vec<BigUint>, arguments: Vec<usize>, field_size: BigUint) -> BigUint {
+pub fn evaluate(data: Vec<BigUint>, arguments: Vec<BigUint>, field_size: BigUint) -> BigUint {
     let l = arguments.len();
     let p = field_size;
     assert!(data.len() <= (1 << l));
@@ -110,9 +110,9 @@ pub fn evaluate(data: Vec<BigUint>, arguments: Vec<usize>, field_size: BigUint) 
     }
 
     for i in 1..l + 1 {
-        let r = arguments[i - 1];
+        let r = arguments[i - 1].clone();
         for b in 0..2usize.pow((l - i).try_into().unwrap()) {
-            a[b] = (a[b << 1].clone() * (1 - r) + a[(b << 1) + 1].clone() * r) % p.clone();
+            a[b] = (a[b << 1].clone() * (1u64 - r.clone()) + a[(b << 1) + 1].clone() * r.clone()) % p.clone();
         }
     }
     a[0].clone()
@@ -125,7 +125,7 @@ pub fn evaluate(data: Vec<BigUint>, arguments: Vec<usize>, field_size: BigUint) 
 /// `field_size`: The size of the finite field that the array value belongs.
 pub fn evaluate_sparse(
     data: Vec<(usize, BigUint)>,
-    arguments: Vec<usize>,
+    arguments: Vec<BigUint>,
     field_size: BigUint,
 ) -> BigUint {
     let l = arguments.len();
@@ -134,7 +134,7 @@ pub fn evaluate_sparse(
     let mut dp0 = data;
     let mut dp1: HashMap<usize, BigUint> = HashMap::new();
     for i in 0..l {
-        let r = arguments[i];
+        let r = arguments[i].clone();
         for (k, v) in dp0 {
             if !dp1.contains_key(&(k >> 1)) {
                 dp1.insert(k >> 1, 0u64.into());
@@ -142,10 +142,10 @@ pub fn evaluate_sparse(
             if k & 1 == 0 {
                 dp1.insert(
                     k >> 1,
-                    (dp1.get(&(k >> 1)).unwrap() + v * (1 - r)) % p.clone(),
+                    (dp1.get(&(k >> 1)).unwrap() + v * (1u64 - r.clone())) % p.clone(),
                 );
             } else {
-                dp1.insert(k >> 1, (dp1.get(&(k >> 1)).unwrap() + v * r) % p.clone());
+                dp1.insert(k >> 1, (dp1.get(&(k >> 1)).unwrap() + v * r.clone()) % p.clone());
             }
         }
         dp0 = dp1.into_iter().collect();
