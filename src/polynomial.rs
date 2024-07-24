@@ -5,7 +5,7 @@ use std::{
 
 use num_bigint::{BigUint, RandBigInt};
 use num_traits::{One, Zero};
-use rand::distributions::{Distribution, Uniform};
+use rand::{distributions::{Distribution, Uniform}, rngs::OsRng};
 
 use crate::pmf::PMF;
 
@@ -324,12 +324,11 @@ pub fn make_MVLinear_constructor(
 // Function to generate a random prime number of a given bit length
 pub fn random_prime(bit_length: usize) -> BigUint {
     let mut rng = rand::thread_rng();
-    loop {
-        let prime_candidate = rng.gen_biguint(bit_length.try_into().unwrap());
-        if is_prime::is_prime(&prime_candidate.to_str_radix(10)) {
-            return prime_candidate;
-        }
+    let mut prime_candidate = rng.gen_biguint(bit_length.try_into().unwrap());
+    while !is_prime::is_prime(&prime_candidate.to_str_radix(10)) {
+        prime_candidate += 2u64;
     }
+    prime_candidate
 }
 
 // Function to create a random MVLinear
