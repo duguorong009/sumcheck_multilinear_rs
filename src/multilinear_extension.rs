@@ -91,7 +91,11 @@ fn _product1mx(xs: &[MVLinear], lo: usize, hi: usize) -> MVLinear {
         let right = _product1mx(xs, lo + (hi - lo) / 2, hi);
         return left * right;
     }
-    MVLinear::new(xs[0].num_variables, vec![(0b0000, 1u64.into())], xs[0].p.clone())
+    MVLinear::new(
+        xs[0].num_variables,
+        vec![(0b0000, 1u64.into())],
+        xs[0].p.clone(),
+    )
 }
 
 /// Directly evaluate a polynomial based on multilinear extension. The function takes linear time to the size of the data.
@@ -112,7 +116,8 @@ pub fn evaluate(data: &[BigUint], arguments: &[BigUint], field_size: BigUint) ->
     for i in 1..l + 1 {
         let r = arguments[i - 1].clone();
         for b in 0..2usize.pow((l - i).try_into().unwrap()) {
-            a[b] = (a[b << 1].clone() * (1u64 - r.clone()) + a[(b << 1) + 1].clone() * r.clone()) % p.clone();
+            a[b] = (a[b << 1].clone() * (1u64 - r.clone()) + a[(b << 1) + 1].clone() * r.clone())
+                % p.clone();
         }
     }
     a[0].clone()
@@ -145,7 +150,10 @@ pub fn evaluate_sparse(
                     (dp1.get(&(k >> 1)).unwrap() + v * (1u64 - r.clone())) % p.clone(),
                 );
             } else {
-                dp1.insert(k >> 1, (dp1.get(&(k >> 1)).unwrap() + v * r.clone()) % p.clone());
+                dp1.insert(
+                    k >> 1,
+                    (dp1.get(&(k >> 1)).unwrap() + v * r.clone()) % p.clone(),
+                );
             }
         }
         dp0 = dp1.into_iter().collect();
@@ -170,11 +178,12 @@ mod tests {
     fn test_extend() {
         // Create a random number generator
         let mut rng = rand::thread_rng();
-        
+
         for t in 0..1 {
             let p = random_prime(64);
-            println!("Test #{t}... P : {p:?}");
-            let arr: Vec<BigUint> = (0..1024).map(|_| rng.gen_biguint_range(&0u64.into(), &p)).collect();
+            let arr: Vec<BigUint> = (0..1024)
+                .map(|_| rng.gen_biguint_range(&0u64.into(), &p))
+                .collect();
             let poly = extend(&arr, p.clone());
             for _ in 0..poly.num_variables.pow(2) {
                 let i = rng.gen_range(0..arr.len());
@@ -191,7 +200,14 @@ mod tests {
         for t in 0..1 {
             let p = random_prime(64);
             let l = 10;
-            let data: HashMap<usize, BigUint> = (0..256).map(|_| (rng.gen_range(0..1 << l), rng.gen_biguint_range(&0u64.into(), &p))).collect();
+            let data: HashMap<usize, BigUint> = (0..256)
+                .map(|_| {
+                    (
+                        rng.gen_range(0..1 << l),
+                        rng.gen_biguint_range(&0u64.into(), &p),
+                    )
+                })
+                .collect();
             let data_vec: Vec<(usize, BigUint)> = data.clone().into_iter().collect();
             let poly = extend_sparse(&data_vec, l, p.clone());
             for k in 0..1 << l {
@@ -211,9 +227,13 @@ mod tests {
         for _ in 0..1 {
             let p = random_prime(64);
             let l = 8;
-            let arr: Vec<BigUint> = (0..1 << l).map(|_| rng.gen_biguint_range(&0u64.into(), &p)).collect();
+            let arr: Vec<BigUint> = (0..1 << l)
+                .map(|_| rng.gen_biguint_range(&0u64.into(), &p))
+                .collect();
             let poly = extend(&arr, p.clone());
-            let args: Vec<BigUint> = (0..l).map(|_| rng.gen_biguint_range(&0u64.into(), &p)).collect();
+            let args: Vec<BigUint> = (0..l)
+                .map(|_| rng.gen_biguint_range(&0u64.into(), &p))
+                .collect();
             assert!(poly.eval(&args) == evaluate(&arr, &args, p));
         }
     }
@@ -224,10 +244,19 @@ mod tests {
         for _ in 0..1 {
             let p = random_prime(64);
             let l = 9;
-            let data: HashMap<usize, BigUint> = (0..1 << 3).map(|_| (rng.gen_range(0..1 << l), rng.gen_biguint_range(&0u64.into(), &p))).collect();
+            let data: HashMap<usize, BigUint> = (0..1 << 3)
+                .map(|_| {
+                    (
+                        rng.gen_range(0..1 << l),
+                        rng.gen_biguint_range(&0u64.into(), &p),
+                    )
+                })
+                .collect();
             let data_vec: Vec<(usize, BigUint)> = data.clone().into_iter().collect();
             let poly = extend_sparse(&data_vec, l, p.clone());
-            let args: Vec<BigUint> = (0..l).map(|_| rng.gen_biguint_range(&0u64.into(), &p)).collect();
+            let args: Vec<BigUint> = (0..l)
+                .map(|_| rng.gen_biguint_range(&0u64.into(), &p))
+                .collect();
             assert!(poly.eval(&args) == evaluate_sparse(&data_vec, &args, p));
         }
     }
