@@ -1,4 +1,5 @@
 mod gkr;
+mod gkr_prover;
 mod multilinear_extension;
 mod pmf;
 mod polynomial;
