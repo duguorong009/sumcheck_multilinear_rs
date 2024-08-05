@@ -42,3 +42,26 @@ pub fn _three_split(arg: usize, l: usize) -> (usize, usize, usize) {
     let y = (arg & (((1 << l) - 1) << (2 * l))) >> (2 * l);
     (z, x, y)
 }
+
+///
+/// 
+/// `f1`: Sparse polynomial f1(z, x, y) Sparse MVLinear represented by a map of argument and its evaluation. Argument is little endian binary form, evaluation.
+/// `l`: number of variables of f3
+/// `p`: field size
+/// `a_f3`: Bookkeeping table of f3 (where f3 is the multilinear extension of f3)
+/// `g`: fixed parameter g of f1
+/// return: Bookkeeping table of h_g = sum over y: f1(g, x, y)*f3(y). It has size 2 ** l. It also returns G, which is precompute(g, p), that is useful for phase two.
+pub fn initialize_phase_one(f1: HashMap<usize, BigUint>, l: usize, p: BigUint, a_f3: Vec<BigUint>, g: Vec<BigUint>) -> (Vec<BigUint>, Vec<BigUint>) {
+    assert!(a_f3.len() == 1 << l);
+    assert!(g.len() == l);
+
+    let mut a_hg = vec![BigUint::ZERO; 1 << l];
+    let g = precompute(g, p.clone());
+
+    // rely on sparsity
+    for (arg, ev) in f1.into_iter() {
+        let (z, x, y) = _three_split(arg, l);
+        a_hg[x] += g[z].clone() * ev * a_f3[y].clone() % p.clone();
+    }
+    (a_hg, g)
+}
