@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 use num_bigint::BigUint;
 use num_traits::One;
 
@@ -32,7 +34,7 @@ pub fn precompute(g: Vec<BigUint>, p: BigUint) -> Vec<BigUint> {
 }
 
 /// Split the argument into three parts.
-/// 
+///
 /// `arg`: The argument of length 3L
 /// `l`: The number of variables
 /// `z`: (first L bits), `x`: (second L bits), `y`: (last L bits)
@@ -44,14 +46,20 @@ pub fn _three_split(arg: usize, l: usize) -> (usize, usize, usize) {
 }
 
 ///
-/// 
+///
 /// `f1`: Sparse polynomial f1(z, x, y) Sparse MVLinear represented by a map of argument and its evaluation. Argument is little endian binary form, evaluation.
 /// `l`: number of variables of f3
 /// `p`: field size
 /// `a_f3`: Bookkeeping table of f3 (where f3 is the multilinear extension of f3)
 /// `g`: fixed parameter g of f1
 /// return: Bookkeeping table of h_g = sum over y: f1(g, x, y)*f3(y). It has size 2 ** l. It also returns G, which is precompute(g, p), that is useful for phase two.
-pub fn initialize_phase_one(f1: HashMap<usize, BigUint>, l: usize, p: BigUint, a_f3: Vec<BigUint>, g: Vec<BigUint>) -> (Vec<BigUint>, Vec<BigUint>) {
+pub fn initialize_phase_one(
+    f1: HashMap<usize, BigUint>,
+    l: usize,
+    p: BigUint,
+    a_f3: Vec<BigUint>,
+    g: Vec<BigUint>,
+) -> (Vec<BigUint>, Vec<BigUint>) {
     assert!(a_f3.len() == 1 << l);
     assert!(g.len() == l);
 
