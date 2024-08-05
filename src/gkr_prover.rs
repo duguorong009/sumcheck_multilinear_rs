@@ -36,9 +36,9 @@ pub fn precompute(g: Vec<BigUint>, p: BigUint) -> Vec<BigUint> {
 /// `arg`: The argument of length 3L
 /// `l`: The number of variables
 /// `z`: (first L bits), `x`: (second L bits), `y`: (last L bits)
-pub fn _three_split(arg: BigUint, l: usize) -> (BigUint, BigUint, BigUint) {
-    let z = arg.clone() & ((BigUint::one() << l) - BigUint::one());
-    let x = (arg.clone() & (((BigUint::one() << l) - BigUint::one()) << l)) >> l;
-    let y = (arg & (((BigUint::one() << l) - BigUint::one()) << (2 * l))) >> (2 * l);
+pub fn _three_split(arg: usize, l: usize) -> (usize, usize, usize) {
+    let z = arg.clone() & ((1 << l) - 1);
+    let x = (arg.clone() & (((1 << l) - 1) << l)) >> l;
+    let y = (arg & (((1 << l) - 1) << (2 * l))) >> (2 * l);
     (z, x, y)
 }
