@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 
 use num_bigint::BigUint;
-use num_traits::One;
+use num_traits::{One, Zero};
 
 /// Change binary form to list of arguments.
 ///
@@ -72,4 +72,14 @@ pub fn initialize_phase_one(
         a_hg[x] += g[z].clone() * ev * a_f3[y].clone() % p.clone();
     }
     (a_hg, g)
+}
+
+/// calculate the sum of the GKR.
+pub fn sum_of_gkr(a_hg: &[BigUint], f2: &[BigUint], p: BigUint) -> BigUint {
+    assert!(a_hg.len() == f2.len());
+    let mut s = BigUint::zero();
+    for i in 0..a_hg.len() {
+        s += a_hg[i].clone() * f2[i].clone() % p.clone();
+    }
+    s
 }
