@@ -47,7 +47,7 @@ pub fn _three_split(arg: usize, l: usize) -> (usize, usize, usize) {
 
 ///
 ///
-/// `f1`: Sparse polynomial f1(z, x, y) Sparse MVLinear represented by a map of argument and its evaluation. Argument is little endian binary form, evaluation.
+/// `f1`: Sparse polynomial f1(z, x, y) Sparse MVLinear represented by a map of [argument in little endian binary form, evaluation].
 /// `l`: number of variables of f3
 /// `p`: field size
 /// `a_f3`: Bookkeeping table of f3 (where f3 is the multilinear extension of f3)
@@ -82,4 +82,28 @@ pub fn sum_of_gkr(a_hg: &[BigUint], f2: &[BigUint], p: BigUint) -> BigUint {
         s += a_hg[i].clone() * f2[i].clone() % p.clone();
     }
     s
+}
+
+/// phase two
+///
+/// `f1`: Sparse polynomial f1(z, x, y) Sparse MVLinear represented by a map of [argument in little endian binary form, evaluation].
+/// `g`: precompute(g, p), which is outputted in phase one. It has size 2 ** l.
+/// `u`: randomness of previous phase sum check protocol. It has size l (#variables in f2, f3).
+/// `p`: field size
+/// return: Bookkeeping table of f1(g, u, y) over y. It has size 2 ** l.
+pub fn initialize_phase_two(
+    f1: HashMap<usize, BigUint>,
+    g: &[BigUint],
+    u: &[BigUint],
+    p: BigUint,
+) -> Vec<BigUint> {
+    let l = u.len();
+    let u = precompute(g.to_vec(), p.clone());
+    assert!(u.len() == g.len());
+    let mut a_f1 = vec![BigUint::ZERO; 1 << l];
+    for (arg, ev) in f1.into_iter() {
+        let (z, x, y) = _three_split(arg, l);
+        a_f1[y] = (a_f1[y].clone() + g[z].clone() * u[x].clone() * ev) % p.clone();
+    }
+    a_f1
 }
