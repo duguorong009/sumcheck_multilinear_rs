@@ -8,6 +8,7 @@ use num_bigint::BigUint;
 /// f3: Dense polynomial represented by a map of argument (index) and its evaluation (value).
 /// p: field size
 /// l: number of variables in f2 and f3
+#[derive(Debug)]
 pub struct GKR {
     f1: HashMap<usize, BigUint>,
     f2: Vec<BigUint>,

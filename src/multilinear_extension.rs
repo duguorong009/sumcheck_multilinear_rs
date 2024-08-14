@@ -14,12 +14,10 @@ pub fn extend(data: &[BigUint], field_size: BigUint) -> MVLinear {
     let p = field_size;
     let gen = make_MVLinear_constructor(l, p.clone());
     let x: Vec<MVLinear> = (0..l)
-        .into_iter()
         .map(|i| gen(vec![(1 << i, 1u64.into())]))
         .collect();
 
     let mut poly_terms: HashMap<usize, BigUint> = (0..2usize.pow(l.try_into().unwrap()))
-        .into_iter()
         .map(|i| (i, 0u64.into()))
         .collect();
 
@@ -53,12 +51,10 @@ pub fn extend_sparse(data: &[(usize, BigUint)], num_var: usize, field_size: BigU
     let p = field_size;
     let gen = make_MVLinear_constructor(l, p.clone());
     let x: Vec<MVLinear> = (0..l)
-        .into_iter()
         .map(|i| gen(vec![(1 << i, 1u64.into())]))
         .collect();
 
     let mut poly_terms: HashMap<usize, BigUint> = (0..2usize.pow(l.try_into().unwrap()))
-        .into_iter()
         .map(|i| (i, 0u64.into()))
         .collect();
 
@@ -141,9 +137,7 @@ pub fn evaluate_sparse(
     for i in 0..l {
         let r = arguments[i].clone();
         for (k, v) in dp0 {
-            if !dp1.contains_key(&(k >> 1)) {
-                dp1.insert(k >> 1, 0u64.into());
-            }
+            dp1.entry(k >> 1).or_insert_with(|| 0u64.into());
             if k & 1 == 0 {
                 dp1.insert(
                     k >> 1,

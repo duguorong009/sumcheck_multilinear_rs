@@ -1,4 +1,4 @@
-use std::{clone, fmt::Display, ops::Mul};
+use std::{fmt::Display, ops::Mul};
 
 use num_bigint::BigUint;
 use num_traits::One;

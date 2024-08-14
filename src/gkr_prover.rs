@@ -7,7 +7,7 @@ use num_traits::{One, Zero};
 ///
 /// `b`: The binary form in little endian encoding. For example, 0b1011 means g(x0=1, x1=1, x2=0, x3=1)
 /// `num_variables`: number of variables
-fn binary_to_list(mut b: usize, num_variables: usize) -> Vec<usize> {
+pub fn binary_to_list(mut b: usize, num_variables: usize) -> Vec<usize> {
     let mut lst = vec![0; num_variables];
     let mut i = 0;
     while b != 0 {
@@ -39,8 +39,8 @@ pub fn precompute(g: Vec<BigUint>, p: BigUint) -> Vec<BigUint> {
 /// `l`: The number of variables
 /// `z`: (first L bits), `x`: (second L bits), `y`: (last L bits)
 pub fn _three_split(arg: usize, l: usize) -> (usize, usize, usize) {
-    let z = arg.clone() & ((1 << l) - 1);
-    let x = (arg.clone() & (((1 << l) - 1) << l)) >> l;
+    let z = arg & ((1 << l) - 1);
+    let x = (arg & (((1 << l) - 1) << l)) >> l;
     let y = (arg & (((1 << l) - 1) << (2 * l))) >> (2 * l);
     (z, x, y)
 }

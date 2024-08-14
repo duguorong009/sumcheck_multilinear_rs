@@ -95,7 +95,7 @@ impl MVLinear {
         }
         let mut new_terms = HashMap::new();
         for (t, v) in self.terms.iter() {
-            let mut t = t.clone();
+            let mut t = *t;
             let mut v = v.clone();
             for k in 0..s {
                 if t & (1 << k) > 0 {
