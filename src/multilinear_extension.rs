@@ -13,9 +13,7 @@ pub fn extend(data: &[BigUint], field_size: BigUint) -> MVLinear {
     let l = (data.len() as f64).log2().ceil() as usize;
     let p = field_size;
     let gen = make_MVLinear_constructor(l, p.clone());
-    let x: Vec<MVLinear> = (0..l)
-        .map(|i| gen(vec![(1 << i, 1u64.into())]))
-        .collect();
+    let x: Vec<MVLinear> = (0..l).map(|i| gen(vec![(1 << i, 1u64.into())])).collect();
 
     let mut poly_terms: HashMap<usize, BigUint> = (0..2usize.pow(l.try_into().unwrap()))
         .map(|i| (i, 0u64.into()))
@@ -50,9 +48,7 @@ pub fn extend_sparse(data: &[(usize, BigUint)], num_var: usize, field_size: BigU
     let l = num_var;
     let p = field_size;
     let gen = make_MVLinear_constructor(l, p.clone());
-    let x: Vec<MVLinear> = (0..l)
-        .map(|i| gen(vec![(1 << i, 1u64.into())]))
-        .collect();
+    let x: Vec<MVLinear> = (0..l).map(|i| gen(vec![(1 << i, 1u64.into())])).collect();
 
     let mut poly_terms: HashMap<usize, BigUint> = (0..2usize.pow(l.try_into().unwrap()))
         .map(|i| (i, 0u64.into()))

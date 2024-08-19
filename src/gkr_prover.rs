@@ -107,3 +107,47 @@ pub fn initialize_phase_two(
     }
     a_f1
 }
+
+type Talker = dyn Fn(&Vec<BigUint>) -> (bool, BigUint);
+
+fn talk_process(
+    mut as_vec: Vec<Vec<BigUint>>,
+    l: usize,
+    p: BigUint,
+    talker: &Talker,
+    msg_recorder: Option<&mut Vec<Vec<BigUint>>>,
+) {
+    let num_multiplicands = 2;
+    for i in 1..=l {
+        let mut product_sum: Vec<BigUint> = vec![0u64.into(); num_multiplicands as usize + 1];
+        for b in 0..(1 << (l - i)) {
+            for t in 0..=num_multiplicands {
+                let mut product = BigUint::one();
+                for j in 0..num_multiplicands {
+                    let a = &as_vec[j].clone();
+                    product = product
+                        * (((a[(b << 1) as usize].clone() * ((1 - t) % p.clone()))
+                            + (a[((b << 1) + 1) as usize].clone() * t) % p.clone())
+                            % p.clone())
+                        % p.clone();
+                }
+                product_sum[t as usize] = (product_sum[t as usize].clone() + product) % p.clone();
+            }
+        }
+        todo!("resolve the error in following commented code");
+        // if let Some(ref msg_recorder) = msg_recorder {
+        //     msg_recorder.push(product_sum.clone());
+        // }
+        let (result, r) = talker(&product_sum);
+
+        assert!(result);
+        for j in 0..num_multiplicands {
+            for b in 0..(1 << (l - i)) {
+                as_vec[j][b as usize] = (as_vec[j][(b << 1) as usize].clone()
+                    * (BigUint::one() - r.clone())
+                    + as_vec[j][((b << 1) + 1) as usize].clone() * r.clone())
+                    % p.clone();
+            }
+        }
+    }
+}
