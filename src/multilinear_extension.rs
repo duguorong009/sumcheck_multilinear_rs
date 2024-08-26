@@ -2,7 +2,7 @@ use std::collections::HashMap;
 
 use num_bigint::BigUint;
 
-use crate::polynomial::{make_MVLinear_constructor, MVLinear};
+use crate::polynomial::{make_mvlinear_constructor, MVLinear};
 
 /// Convert an array to a polynomial where the argument is the binary form of index.
 ///
@@ -12,7 +12,7 @@ use crate::polynomial::{make_MVLinear_constructor, MVLinear};
 pub fn extend(data: &[BigUint], field_size: BigUint) -> MVLinear {
     let l = (data.len() as f64).log2().ceil() as usize;
     let p = field_size;
-    let gen = make_MVLinear_constructor(l, p.clone());
+    let gen = make_mvlinear_constructor(l, p.clone());
     let x: Vec<MVLinear> = (0..l).map(|i| gen(vec![(1 << i, 1u64.into())])).collect();
 
     let mut poly_terms: HashMap<usize, BigUint> = (0..2usize.pow(l.try_into().unwrap()))
@@ -47,7 +47,7 @@ pub fn extend(data: &[BigUint], field_size: BigUint) -> MVLinear {
 pub fn extend_sparse(data: &[(usize, BigUint)], num_var: usize, field_size: BigUint) -> MVLinear {
     let l = num_var;
     let p = field_size;
-    let gen = make_MVLinear_constructor(l, p.clone());
+    let gen = make_mvlinear_constructor(l, p.clone());
     let x: Vec<MVLinear> = (0..l).map(|i| gen(vec![(1 << i, 1u64.into())])).collect();
 
     let mut poly_terms: HashMap<usize, BigUint> = (0..2usize.pow(l.try_into().unwrap()))

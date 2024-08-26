@@ -314,7 +314,7 @@ impl std::fmt::Display for MVLinear {
 }
 
 /// Return a function that outputs MVLinear.
-pub fn make_MVLinear_constructor(
+pub fn make_mvlinear_constructor(
     num_variables: usize,
     p: BigUint,
 ) -> impl Fn(Vec<(usize, BigUint)>) -> MVLinear {
@@ -332,7 +332,7 @@ pub fn random_prime(bit_length: usize) -> BigUint {
 }
 
 // Function to create a random MVLinear
-fn random_MVLinear(
+fn random_mvlinear(
     num_variables: usize,
     prime: Option<BigUint>,
     prime_bit_length: Option<usize>,
@@ -344,7 +344,7 @@ fn random_MVLinear(
         None => random_prime(prime_bit_length), // Ensure the prime fits in usize
     };
 
-    let mv_linear_constructor = make_MVLinear_constructor(num_variables, p.clone());
+    let mv_linear_constructor = make_mvlinear_constructor(num_variables, p.clone());
     let mut terms = HashMap::new();
     let mut rng = rand::thread_rng();
     let range = Uniform::from(0..num_terms);
