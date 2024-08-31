@@ -11,7 +11,7 @@ pub fn extend(data: &[u64], field_size: u64) -> MVLinear {
     let l = (data.len() as f64).log2().ceil() as usize;
     let p = field_size;
     let gen = make_mvlinear_constructor(l, p);
-    let x: Vec<MVLinear> = (0..l).map(|i| gen(vec![(1 << i, 1u64.into())])).collect();
+    let x: Vec<MVLinear> = (0..l).map(|i| gen(vec![(1 << i, 1)])).collect();
 
     let mut poly_terms: HashMap<usize, u64> = (0..2usize.pow(l.try_into().unwrap()))
         .map(|i| (i, 0u64.into()))
@@ -28,7 +28,11 @@ pub fn extend(data: &[u64], field_size: u64) -> MVLinear {
             }
             xi0
         };
-        sub_poly *= _product1mx(&xi0, 0, xi0.len() - 1);
+        // When `xi0` is empty, `sub_poly` is multiplied by 1.
+        // Hence, skip the obvious multiplication.
+        if !xi0.is_empty() {
+            sub_poly *= _product1mx(&xi0, 0, xi0.len() - 1);
+        }
         for (t, v) in sub_poly.terms {
             poly_terms.insert(t, (poly_terms.get(&t).unwrap() + v) % p);
         }
