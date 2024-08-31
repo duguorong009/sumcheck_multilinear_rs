@@ -318,7 +318,9 @@ pub fn make_mvlinear_constructor(
 // NOTE: Currently only works for bit_length <= 64
 pub fn random_prime(bit_length: usize) -> u64 {
     let mut rng = rand::thread_rng();
-    let mut prime_candidate: u64 = rng.gen();
+    let lower_bound = 1u64 << (bit_length - 1); // 2 ^ (bit_length - 1)
+    let upper_bound = (1u64 << bit_length) - 1; // 2 ^ bit_length - 1
+    let mut prime_candidate: u64 = rng.gen_range(lower_bound..=upper_bound) | 1;
     while !is_prime::is_prime(&prime_candidate.to_string()) {
         prime_candidate += 2u64;
     }
