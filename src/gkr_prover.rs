@@ -1,8 +1,5 @@
 use std::collections::HashMap;
 
-use num_bigint::BigUint;
-use num_traits::{One, Zero};
-
 /// Change binary form to list of arguments.
 ///
 /// `b`: The binary form in little endian encoding. For example, 0b1011 means g(x0=1, x1=1, x2=0, x3=1)
@@ -18,16 +15,16 @@ pub fn binary_to_list(mut b: usize, num_variables: usize) -> Vec<usize> {
     lst
 }
 
-pub fn precompute(g: Vec<BigUint>, p: BigUint) -> Vec<BigUint> {
+pub fn precompute(g: Vec<u64>, p: u64) -> Vec<u64> {
     let l = g.len();
-    let mut g = vec![BigUint::ZERO; 1 << l];
-    g[0] = BigUint::one() - g[0].clone();
-    g[1] = g[0].clone();
+    let mut g = vec![0; 1 << l];
+    g[0] = 1 - g[0];
+    g[1] = g[0];
     for i in 1..l {
         let old_g = g.clone();
         for b in 0..1 << i {
-            g[b] = old_g[b].clone() * (BigUint::one() - g[i].clone()) % p.clone();
-            g[b + (1 << i)] = old_g[b].clone() * g[i].clone() % p.clone();
+            g[b] = old_g[b] * (1 - g[i]) % p;
+            g[b + (1 << i)] = old_g[b] * g[i] % p;
         }
     }
     g
@@ -54,32 +51,32 @@ pub fn _three_split(arg: usize, l: usize) -> (usize, usize, usize) {
 /// `g`: fixed parameter g of f1
 /// return: Bookkeeping table of h_g = sum over y: f1(g, x, y)*f3(y). It has size 2 ** l. It also returns G, which is precompute(g, p), that is useful for phase two.
 pub fn initialize_phase_one(
-    f1: HashMap<usize, BigUint>,
+    f1: HashMap<usize, u64>,
     l: usize,
-    p: BigUint,
-    a_f3: Vec<BigUint>,
-    g: Vec<BigUint>,
-) -> (Vec<BigUint>, Vec<BigUint>) {
+    p: u64,
+    a_f3: Vec<u64>,
+    g: Vec<u64>,
+) -> (Vec<u64>, Vec<u64>) {
     assert!(a_f3.len() == 1 << l);
     assert!(g.len() == l);
 
-    let mut a_hg = vec![BigUint::ZERO; 1 << l];
-    let g = precompute(g, p.clone());
+    let mut a_hg = vec![0; 1 << l];
+    let g = precompute(g, p);
 
     // rely on sparsity
     for (arg, ev) in f1.into_iter() {
         let (z, x, y) = _three_split(arg, l);
-        a_hg[x] += g[z].clone() * ev * a_f3[y].clone() % p.clone();
+        a_hg[x] += g[z] * ev * a_f3[y] % p;
     }
     (a_hg, g)
 }
 
 /// calculate the sum of the GKR.
-pub fn sum_of_gkr(a_hg: &[BigUint], f2: &[BigUint], p: BigUint) -> BigUint {
+pub fn sum_of_gkr(a_hg: &[u64], f2: &[u64], p: u64) -> u64 {
     assert!(a_hg.len() == f2.len());
-    let mut s = BigUint::zero();
+    let mut s = 0;
     for i in 0..a_hg.len() {
-        s += a_hg[i].clone() * f2[i].clone() % p.clone();
+        s += a_hg[i] * f2[i] % p;
     }
     s
 }
@@ -91,47 +88,42 @@ pub fn sum_of_gkr(a_hg: &[BigUint], f2: &[BigUint], p: BigUint) -> BigUint {
 /// `u`: randomness of previous phase sum check protocol. It has size l (#variables in f2, f3).
 /// `p`: field size
 /// return: Bookkeeping table of f1(g, u, y) over y. It has size 2 ** l.
-pub fn initialize_phase_two(
-    f1: HashMap<usize, BigUint>,
-    g: &[BigUint],
-    u: &[BigUint],
-    p: BigUint,
-) -> Vec<BigUint> {
+pub fn initialize_phase_two(f1: HashMap<usize, u64>, g: &[u64], u: &[u64], p: u64) -> Vec<u64> {
     let l = u.len();
-    let u = precompute(g.to_vec(), p.clone());
+    let u = precompute(g.to_vec(), p);
     assert!(u.len() == g.len());
-    let mut a_f1 = vec![BigUint::ZERO; 1 << l];
+    let mut a_f1 = vec![0; 1 << l];
     for (arg, ev) in f1.into_iter() {
         let (z, x, y) = _three_split(arg, l);
-        a_f1[y] = (a_f1[y].clone() + g[z].clone() * u[x].clone() * ev) % p.clone();
+        a_f1[y] = (a_f1[y] + g[z] * u[x] * ev) % p;
     }
     a_f1
 }
 
-type Talker = dyn Fn(&Vec<BigUint>) -> (bool, BigUint);
+type Talker = dyn Fn(&Vec<u64>) -> (bool, u64);
 
 fn talk_process(
-    mut as_vec: Vec<Vec<BigUint>>,
+    mut as_vec: Vec<Vec<u64>>,
     l: usize,
-    p: BigUint,
+    p: u64,
     talker: &Talker,
-    msg_recorder: Option<&mut Vec<Vec<BigUint>>>,
+    msg_recorder: Option<&mut Vec<Vec<u64>>>,
 ) {
     let num_multiplicands = 2;
     for i in 1..=l {
-        let mut product_sum: Vec<BigUint> = vec![0u64.into(); num_multiplicands as usize + 1];
+        let mut product_sum: Vec<u64> = vec![0u64.into(); num_multiplicands as usize + 1];
         for b in 0..(1 << (l - i)) {
             for t in 0..=num_multiplicands {
-                let mut product = BigUint::one();
+                let mut product = 1;
                 for j in 0..num_multiplicands {
                     let a = &as_vec[j].clone();
                     product = product
-                        * (((a[(b << 1) as usize].clone() * ((1 - t) % p.clone()))
-                            + (a[((b << 1) + 1) as usize].clone() * t) % p.clone())
-                            % p.clone())
-                        % p.clone();
+                        * (((a[b << 1] * ((1 - t as u64) % p))
+                            + (a[((b << 1) + 1) as usize] * (t as u64)) % p)
+                            % p)
+                        % p;
                 }
-                product_sum[t as usize] = (product_sum[t as usize].clone() + product) % p.clone();
+                product_sum[t as usize] = (product_sum[t as usize] + product) % p;
             }
         }
         todo!("resolve the error in following commented code");
@@ -143,10 +135,9 @@ fn talk_process(
         assert!(result);
         for j in 0..num_multiplicands {
             for b in 0..(1 << (l - i)) {
-                as_vec[j][b as usize] = (as_vec[j][(b << 1) as usize].clone()
-                    * (BigUint::one() - r.clone())
-                    + as_vec[j][((b << 1) + 1) as usize].clone() * r.clone())
-                    % p.clone();
+                as_vec[j][b as usize] = (as_vec[j][(b << 1) as usize] * (1 - r)
+                    + as_vec[j][((b << 1) + 1) as usize] * r)
+                    % p;
             }
         }
     }
