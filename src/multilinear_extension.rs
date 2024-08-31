@@ -72,16 +72,20 @@ pub fn extend_sparse(data: &[(usize, u64)], num_var: usize, field_size: u64) -> 
 }
 
 /// Divide and conquer algorithm for calculating product of (1 - xi)
+///
+/// **NOTE**: When `xs` is empty, the result will be 1.
+/// This should be handled by the caller.
 fn _product1mx(xs: &[MVLinear], lo: usize, hi: usize) -> MVLinear {
+    assert!(hi >= lo);
+    assert!(!xs.is_empty());
+
     if lo == hi {
         return 1u64 - xs[lo].clone();
     }
-    if hi > lo {
-        let left = _product1mx(xs, lo, lo + (hi - lo) / 2);
-        let right = _product1mx(xs, lo + (hi - lo) / 2, hi);
-        return left * right;
-    }
-    MVLinear::new(xs[0].num_variables, vec![(0b0000, 1u64.into())], xs[0].p)
+
+    let left = _product1mx(xs, lo, lo + (hi - lo) / 2);
+    let right = _product1mx(xs, lo + (hi - lo) / 2 + 1, hi);
+    left * right
 }
 
 /// Directly evaluate a polynomial based on multilinear extension. The function takes linear time to the size of the data.
