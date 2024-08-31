@@ -1,6 +1,7 @@
 use std::collections::HashMap;
-
 use rand::rngs::ThreadRng;
+
+use crate::ip_pmf_verifier::InteractivePMFVerifier;
 
 #[derive(Debug)]
 pub enum GKRVerifierState {

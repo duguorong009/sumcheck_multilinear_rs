@@ -4,6 +4,7 @@ mod gkr_verifier;
 mod multilinear_extension;
 mod pmf;
 mod polynomial;
+mod ip_pmf_verifier;
 
 #[test]
 fn dummy_test() {
