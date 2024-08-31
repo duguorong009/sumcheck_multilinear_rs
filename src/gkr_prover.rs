@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use crate::gkr::GKR;
+use crate::{gkr::GKR, gkr_verifier::GKRVerifier};
 
 /// Change binary form to list of arguments.
 ///
@@ -185,7 +185,6 @@ impl GKRProver {
         s: u64,
         verifier: GKRVerifier,
         msg_recorder_phase_1: &mut Option<Vec<Vec<u64>>>,
-        msg_recorder_phase_2: &mut Option<Vec<Vec<u64>>>,
         msg_recorder_phase_2: &mut Option<Vec<Vec<u64>>>,
     ) {
         todo!("come back after GKRVerifier is ready")
