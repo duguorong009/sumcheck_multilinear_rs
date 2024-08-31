@@ -134,7 +134,7 @@ pub fn evaluate_sparse(data: &[(usize, u64)], arguments: &[u64], field_size: u64
         for (k, v) in dp0 {
             dp1.entry(k >> 1).or_insert_with(|| 0);
             if k & 1 == 0 {
-                dp1.insert(k >> 1, (dp1.get(&(k >> 1)).unwrap() + v * (1u64 - r)) % p);
+                dp1.insert(k >> 1, (dp1.get(&(k >> 1)).unwrap() + v * (1 + p - r)) % p);
             } else {
                 dp1.insert(k >> 1, (dp1.get(&(k >> 1)).unwrap() + v * r) % p);
             }
