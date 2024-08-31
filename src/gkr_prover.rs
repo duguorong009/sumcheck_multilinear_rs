@@ -1,5 +1,7 @@
 use std::collections::HashMap;
 
+use crate::gkr::GKR;
+
 /// Change binary form to list of arguments.
 ///
 /// `b`: The binary form in little endian encoding. For example, 0b1011 means g(x0=1, x1=1, x2=0, x3=1)
@@ -140,5 +142,52 @@ fn talk_process(
                     % p;
             }
         }
+    }
+}
+
+fn talk_to_verifier_phase_one(
+    a_hg: &[u64],
+    gkr: GKR,
+    verifier: GKRVerifier,
+    msg_recorder: &mut Option<Vec<Vec<u64>>>,
+) -> (Vec<u64>, u64) {
+    todo!("come back after GKRVerifier is ready")
+}
+
+fn talk_to_verifier_phase_two(
+    a_f1: &[u64],
+    gkr: GKR,
+    f2u: u64,
+    verifier: GKRVerifier,
+    msg_recorder: &mut Option<Vec<Vec<u64>>>,
+) {
+    todo!("come back after GKRVerifier is ready")
+}
+
+#[derive(Debug)]
+pub struct GKRProver {
+    gkr: GKR,
+}
+
+impl GKRProver {
+    pub fn new(gkr: GKR) -> Self {
+        Self { gkr }
+    }
+
+    pub fn init_and_get_sum(&self, g: &[u64]) -> (Vec<u64>, Vec<u64>, u64) {
+        todo!("come back after GKRVerifier is ready")
+    }
+
+    pub fn prove_to_verifier(
+        &self,
+        a_hg: &[u64],
+        g: &[u64],
+        s: u64,
+        verifier: GKRVerifier,
+        msg_recorder_phase_1: &mut Option<Vec<Vec<u64>>>,
+        msg_recorder_phase_2: &mut Option<Vec<Vec<u64>>>,
+        msg_recorder_phase_2: &mut Option<Vec<Vec<u64>>>,
+    ) {
+        todo!("come back after GKRVerifier is ready")
     }
 }
