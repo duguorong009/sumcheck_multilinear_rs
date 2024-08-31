@@ -265,6 +265,13 @@ impl Mul<PMF> for MVLinear {
     }
 }
 
+impl MulAssign<u64> for MVLinear {
+    fn mul_assign(&mut self, rhs: u64) {
+        let rhs = MVLinear::new(self.num_variables, vec![(0b0, rhs)], self.p);
+        *self = self.clone() * rhs;
+    }
+}
+
 impl PartialEq for MVLinear {
     fn eq(&self, other: &MVLinear) -> bool {
         let diff = self.clone() - other.clone();
