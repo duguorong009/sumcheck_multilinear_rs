@@ -112,7 +112,7 @@ pub fn evaluate(data: &[u64], arguments: &[u64], field_size: u64) -> u64 {
     for i in 1..l + 1 {
         let r = arguments[i - 1];
         for b in 0..2usize.pow((l - i).try_into().unwrap()) {
-            a[b] = (a[b << 1] * (1u64 - r) + a[(b << 1) + 1] * r) % p;
+            a[b] = (a[b << 1] * (1 + p - r) + a[(b << 1) + 1] * r) % p;
         }
     }
     a[0]
