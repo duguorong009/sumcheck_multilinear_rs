@@ -14,7 +14,7 @@ pub fn extend(data: &[u64], field_size: u64) -> MVLinear {
     let x: Vec<MVLinear> = (0..l).map(|i| gen(vec![(1 << i, 1)])).collect();
 
     let mut poly_terms: HashMap<usize, u64> = (0..2usize.pow(l.try_into().unwrap()))
-        .map(|i| (i, 0u64.into()))
+        .map(|i| (i, 0))
         .collect();
 
     for b in 0..data.len() {
@@ -50,14 +50,14 @@ pub fn extend_sparse(data: &[(usize, u64)], num_var: usize, field_size: u64) -> 
     let l = num_var;
     let p = field_size;
     let gen = make_mvlinear_constructor(l, p);
-    let x: Vec<MVLinear> = (0..l).map(|i| gen(vec![(1 << i, 1u64.into())])).collect();
+    let x: Vec<MVLinear> = (0..l).map(|i| gen(vec![(1 << i, 1)])).collect();
 
     let mut poly_terms: HashMap<usize, u64> = (0..2usize.pow(l.try_into().unwrap()))
-        .map(|i| (i, 0u64.into()))
+        .map(|i| (i, 0))
         .collect();
 
     for (b, vb) in data {
-        let sub_poly = gen(vec![(*b, *vb)]);
+        let mut sub_poly = gen(vec![(*b, *vb)]);
         let xi0 = {
             let mut xi0 = vec![];
             for i in 0..l {
@@ -67,7 +67,9 @@ pub fn extend_sparse(data: &[(usize, u64)], num_var: usize, field_size: u64) -> 
             }
             xi0
         };
-        let sub_poly = _product1mx(&xi0, 0, xi0.len() - 1) * sub_poly;
+        if !xi0.is_empty() {
+            sub_poly *= _product1mx(&xi0, 0, xi0.len() - 1);
+        }
         for (t, v) in sub_poly.terms {
             poly_terms.insert(t, (poly_terms.get(&t).unwrap() + v) % p);
         }
@@ -104,7 +106,7 @@ pub fn evaluate(data: &[u64], arguments: &[u64], field_size: u64) -> u64 {
 
     let mut a = data.to_vec();
     if a.len() < (1 << l) {
-        a.resize(1 << l, 0u64.into());
+        a.resize(1 << l, 0);
     }
 
     for i in 1..l + 1 {
@@ -130,7 +132,7 @@ pub fn evaluate_sparse(data: &[(usize, u64)], arguments: &[u64], field_size: u64
     for i in 0..l {
         let r = arguments[i];
         for (k, v) in dp0 {
-            dp1.entry(k >> 1).or_insert_with(|| 0u64.into());
+            dp1.entry(k >> 1).or_insert_with(|| 0);
             if k & 1 == 0 {
                 dp1.insert(k >> 1, (dp1.get(&(k >> 1)).unwrap() + v * (1u64 - r)) % p);
             } else {
@@ -184,7 +186,7 @@ mod tests {
             let data_vec: Vec<(usize, u64)> = data.clone().into_iter().collect();
             let poly = extend_sparse(&data_vec, l, p);
             for k in 0..1 << l {
-                let zero = 0u64.into();
+                let zero = 0;
                 let expected = data.get(&k).unwrap_or(&zero);
                 let actual = poly.eval_bin(k);
                 assert!(*expected == actual);
