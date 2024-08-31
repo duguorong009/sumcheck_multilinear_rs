@@ -107,7 +107,7 @@ fn talk_process(
     l: usize,
     p: u64,
     talker: &Talker,
-    msg_recorder: Option<&mut Vec<Vec<u64>>>,
+    msg_recorder: &mut Option<Vec<Vec<u64>>>,
 ) {
     let num_multiplicands = 2;
     for i in 1..=l {
@@ -126,10 +126,10 @@ fn talk_process(
                 product_sum[t as usize] = (product_sum[t as usize] + product) % p;
             }
         }
-        todo!("resolve the error in following commented code");
-        // if let Some(ref msg_recorder) = msg_recorder {
-        //     msg_recorder.push(product_sum.clone());
-        // }
+
+        if let Some(msg_recorder) = msg_recorder {
+            msg_recorder.push(product_sum.clone());
+        }
         let (result, r) = talker(&product_sum);
 
         assert!(result);
