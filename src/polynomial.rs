@@ -3,9 +3,10 @@ use std::{
     ops::{Add, Mul, MulAssign, Neg, Sub},
 };
 
-use num_bigint::{BigUint, RandBigInt};
-use num_traits::{One, Zero};
-use rand::distributions::{Distribution, Uniform};
+use rand::{
+    distributions::{Distribution, Uniform},
+    Rng,
+};
 
 use crate::pmf::PMF;
 
@@ -13,24 +14,24 @@ use crate::pmf::PMF;
 /// A Sparse Representation of a multi-linear polynomial.
 pub struct MVLinear {
     pub(crate) num_variables: usize,
-    pub(crate) terms: HashMap<usize, BigUint>,
-    pub(crate) p: BigUint,
+    pub(crate) terms: HashMap<usize, u64>,
+    pub(crate) p: u64,
 }
 
 impl MVLinear {
-    pub fn new(num_variables: usize, term: Vec<(usize, BigUint)>, p: BigUint) -> MVLinear {
+    pub fn new(num_variables: usize, term: Vec<(usize, u64)>, p: u64) -> MVLinear {
         let mut terms = HashMap::new();
         for (k, v) in term {
             if k >> num_variables > 0 {
                 panic!("Term is out of range.");
             }
-            if (v.clone() % p.clone()).is_zero() {
+            if v % p == 0 {
                 continue;
             }
             if terms.contains_key(&k) {
-                terms.insert(k, (terms.get(&k).unwrap() + v) % p.clone());
+                terms.insert(k, (terms.get(&k).unwrap() + v) % p);
             } else {
-                terms.insert(k, v % p.clone());
+                terms.insert(k, v % p);
             }
         }
 
@@ -48,23 +49,23 @@ impl MVLinear {
         );
     }
 
-    pub fn eval(&self, at: &[BigUint]) -> BigUint {
-        let mut s = BigUint::zero();
+    pub fn eval(&self, at: &[u64]) -> u64 {
+        let mut s = 0;
         for &term in self.terms.keys() {
             let mut term = term;
             let mut i = 0;
-            let mut val = self.terms.get(&term).unwrap().clone();
+            let mut val = *self.terms.get(&term).unwrap();
             while term != 0 {
                 if term & 1 == 1 {
-                    val = (val * (at[i].clone() % self.p.clone())) % self.p.clone();
+                    val = (val * (at[i] % self.p)) % self.p;
                 }
-                if val.is_zero() {
+                if val == 0 {
                     break;
                 }
                 term >>= 1;
                 i += 1;
             }
-            s = (s + val) % self.p.clone();
+            s = (s + val) % self.p;
         }
         s
     }
@@ -72,14 +73,14 @@ impl MVLinear {
     /// Evaluate the polynomial where the arguments are in {0, 1}. The ith argument is the ith bit of the polynomial.
     ///
     /// `at`: polynomial argument in binary form
-    pub fn eval_bin(&self, at: usize) -> BigUint {
+    pub fn eval_bin(&self, at: usize) -> u64 {
         if at > 2usize.pow(self.num_variables.try_into().unwrap()) {
             panic!("Number of varialbes is larger than expected")
         }
-        let mut args = vec![BigUint::zero(); self.num_variables];
+        let mut args = vec![0; self.num_variables];
         for i in 0..self.num_variables {
             if at & (1 << i) > 0 {
-                args[i] = BigUint::one();
+                args[i] = 1;
             }
         }
         self.eval(&args)
@@ -88,7 +89,7 @@ impl MVLinear {
     /// Evaluate part of the arguments of the multilinear polynomial.
     ///
     /// `args`: arguments at beginning
-    fn eval_part(&self, args: &[BigUint]) -> MVLinear {
+    fn eval_part(&self, args: &[u64]) -> MVLinear {
         let s = args.len();
         if s > self.num_variables {
             panic!("len(args) > self.num_variables");
@@ -96,23 +97,23 @@ impl MVLinear {
         let mut new_terms = HashMap::new();
         for (t, v) in self.terms.iter() {
             let mut t = *t;
-            let mut v = v.clone();
+            let mut v = *v;
             for k in 0..s {
                 if t & (1 << k) > 0 {
-                    v = v * (args[k].clone() % self.p.clone()) % self.p.clone();
+                    v = v * (args[k] % self.p) % self.p;
                     t &= !(1 << k);
                 }
             }
             let t_shifted = t >> s;
             new_terms.insert(
                 t_shifted,
-                (new_terms.get(&t_shifted).unwrap_or(&0u64.into()) + v) % self.p.clone(),
+                (new_terms.get(&t_shifted).unwrap_or(&0u64.into()) + v) % self.p,
             );
         }
         MVLinear::new(
             self.num_variables - args.len(),
             new_terms.into_iter().collect(),
-            self.p.clone(),
+            self.p,
         )
     }
 
@@ -126,12 +127,12 @@ impl MVLinear {
             if t & mask > 0 {
                 panic!("Cannot collapse: Variable exist.");
             }
-            new_terms.insert(t >> n, v.clone());
+            new_terms.insert(t >> n, *v);
         }
         MVLinear::new(
             self.num_variables - n,
             new_terms.into_iter().collect(),
-            self.p.clone(),
+            self.p,
         )
     }
 
@@ -146,12 +147,12 @@ impl MVLinear {
             if t & mask > 0 {
                 panic!("Cannot collapse: Variable exist.");
             }
-            new_terms.insert(t & anti_mask, v.clone());
+            new_terms.insert(t & anti_mask, *v);
         }
         MVLinear::new(
             self.num_variables - n,
             new_terms.into_iter().collect(),
-            self.p.clone(),
+            self.p,
         )
     }
 }
@@ -165,12 +166,12 @@ impl Add for MVLinear {
         for (k, v) in other.terms {
             if self.terms.contains_key(&k) {
                 ans.terms
-                    .insert(k, (self.terms.get(&k).unwrap() + v) % self.p.clone());
-                if ans.terms.get(&k).unwrap().is_zero() {
+                    .insert(k, (self.terms.get(&k).unwrap() + v) % self.p);
+                if ans.terms.get(&k).unwrap() == &0 {
                     ans.terms.remove(&k);
                 }
             } else {
-                ans.terms.insert(k, v % self.p.clone());
+                ans.terms.insert(k, v % self.p);
             }
         }
         ans
@@ -186,12 +187,12 @@ impl Sub for MVLinear {
         for (k, v) in other.terms {
             if self.terms.contains_key(&k) {
                 ans.terms
-                    .insert(k, (self.terms.get(&k).unwrap() - v) % self.p.clone());
-                if ans.terms.get(&k).unwrap().is_zero() {
+                    .insert(k, (self.terms.get(&k).unwrap() - v) % self.p);
+                if ans.terms.get(&k).unwrap() == &0 {
                     ans.terms.remove(&k);
                 }
             } else {
-                ans.terms.insert(k, self.p.clone() - v);
+                ans.terms.insert(k, self.p - v);
             }
         }
         ans
@@ -201,11 +202,7 @@ impl Sub for MVLinear {
 impl Neg for MVLinear {
     type Output = MVLinear;
     fn neg(self) -> MVLinear {
-        let zero = MVLinear::new(
-            self.num_variables,
-            vec![(0b0, BigUint::zero())],
-            self.p.clone(),
-        );
+        let zero = MVLinear::new(self.num_variables, vec![(0b0, 0)], self.p);
         zero - self
     }
 }
@@ -227,15 +224,15 @@ impl Mul for MVLinear {
                         nk,
                         (terms.get(&nk).unwrap()
                             + self.terms.get(sk).unwrap() * other.terms.get(ok).unwrap())
-                            % self.p.clone(),
+                            % self.p,
                     );
                 } else {
                     terms.insert(
                         nk,
-                        self.terms.get(sk).unwrap() * other.terms.get(ok).unwrap() % self.p.clone(),
+                        self.terms.get(sk).unwrap() * other.terms.get(ok).unwrap() % self.p,
                     );
                 }
-                if terms.get(&nk).unwrap().is_zero() {
+                if terms.get(&nk).unwrap() == &0 {
                     terms.remove(&nk);
                 }
             }
@@ -248,11 +245,7 @@ impl Mul for MVLinear {
 impl Sub<MVLinear> for u64 {
     type Output = MVLinear;
     fn sub(self, other: MVLinear) -> MVLinear {
-        let t = MVLinear::new(
-            other.num_variables,
-            vec![(0b0, BigUint::from(self))],
-            other.p.clone(),
-        );
+        let t = MVLinear::new(other.num_variables, vec![(0b0, self)], other.p);
         t - other
     }
 }
@@ -316,16 +309,17 @@ impl std::fmt::Display for MVLinear {
 /// Return a function that outputs MVLinear.
 pub fn make_mvlinear_constructor(
     num_variables: usize,
-    p: BigUint,
-) -> impl Fn(Vec<(usize, BigUint)>) -> MVLinear {
-    move |terms: Vec<(usize, BigUint)>| MVLinear::new(num_variables, terms, p.clone())
+    p: u64,
+) -> impl Fn(Vec<(usize, u64)>) -> MVLinear {
+    move |terms: Vec<(usize, u64)>| MVLinear::new(num_variables, terms, p)
 }
 
 // Function to generate a random prime number of a given bit length
-pub fn random_prime(bit_length: usize) -> BigUint {
+// NOTE: Currently only works for bit_length <= 64
+pub fn random_prime(bit_length: usize) -> u64 {
     let mut rng = rand::thread_rng();
-    let mut prime_candidate = rng.gen_biguint(bit_length.try_into().unwrap());
-    while !is_prime::is_prime(&prime_candidate.to_str_radix(10)) {
+    let mut prime_candidate: u64 = rng.gen();
+    while !is_prime::is_prime(&prime_candidate.to_string()) {
         prime_candidate += 2u64;
     }
     prime_candidate
@@ -334,26 +328,23 @@ pub fn random_prime(bit_length: usize) -> BigUint {
 // Function to create a random MVLinear
 fn random_mvlinear(
     num_variables: usize,
-    prime: Option<BigUint>,
+    prime: Option<u64>,
     prime_bit_length: Option<usize>,
 ) -> MVLinear {
-    let prime_bit_length = prime_bit_length.unwrap_or(128);
+    let prime_bit_length = prime_bit_length.unwrap_or(64);
     let num_terms = 2_usize.pow(num_variables as u32);
     let p = match prime {
         Some(p) => p,
         None => random_prime(prime_bit_length), // Ensure the prime fits in usize
     };
 
-    let mv_linear_constructor = make_mvlinear_constructor(num_variables, p.clone());
+    let mv_linear_constructor = make_mvlinear_constructor(num_variables, p);
     let mut terms = HashMap::new();
     let mut rng = rand::thread_rng();
     let range = Uniform::from(0..num_terms);
 
     for _ in 0..num_terms {
-        terms.insert(
-            range.sample(&mut rng),
-            rng.gen_biguint_range(&0u64.into(), &p),
-        );
+        terms.insert(range.sample(&mut rng), rng.gen::<u64>());
     }
 
     mv_linear_constructor(terms.into_iter().collect())

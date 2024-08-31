@@ -1,15 +1,12 @@
 use std::{fmt::Display, ops::Mul};
 
-use num_bigint::BigUint;
-use num_traits::One;
-
 use crate::polynomial::MVLinear;
 
 /// Product of multilinear functions.
 #[derive(Debug, Clone)]
 pub struct PMF {
     num_variables: usize,
-    pub(crate) p: BigUint,
+    pub(crate) p: u64,
     pub(crate) multiplicands: Vec<MVLinear>,
 }
 
@@ -37,8 +34,8 @@ impl PMF {
         self.multiplicands.len()
     }
 
-    fn eval(&self, at: &[BigUint]) -> BigUint {
-        let mut s = BigUint::one();
+    fn eval(&self, at: &[u64]) -> u64 {
+        let mut s = 1;
         for poly in &self.multiplicands {
             s = (s * poly.eval(at)) % self.p.clone();
         }
@@ -72,11 +69,11 @@ impl Display for PMF {
 pub struct DummyPMF {
     num_multiplicands: usize,
     num_variables: usize,
-    pub(crate) p: BigUint,
+    pub(crate) p: u64,
 }
 
 impl DummyPMF {
-    pub fn new(num_multiplicands: usize, num_variables: usize, p: BigUint) -> DummyPMF {
+    pub fn new(num_multiplicands: usize, num_variables: usize, p: u64) -> DummyPMF {
         // let _pmf: PMF = PMF::new(vec![MVLinear::new(num_variables, vec![], p.clone())]);
         DummyPMF {
             num_multiplicands,
@@ -89,7 +86,7 @@ impl DummyPMF {
         self.num_multiplicands
     }
 
-    pub fn eval(&self, _at: &[BigUint]) -> BigUint {
+    pub fn eval(&self, _at: &[u64]) -> u64 {
         unimplemented!("Dummy PMF Evaluated.")
     }
 }
