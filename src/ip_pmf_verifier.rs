@@ -107,6 +107,13 @@ impl InteractivePMFVerifier {
         let deg = self.poly.num_variables * self.poly.num_multiplicands();
         (self.poly.num_variables * deg) as f64 / self.p as f64
     }
+
+    /// The minimum size of prime required to meet the soundness error constraint.
+    fn required_field_length_bit(&self, e: f64) -> usize {
+        let deg = self.poly.num_variables * self.poly.num_multiplicands();
+        let min_p = (self.poly.num_variables as f64 * deg as f64) / e;
+        min_p.log2().ceil() as usize
+    }
 }
 
 // modular inverse (https://www.geeksforgeeks.org/multiplicative-inverse-under-modulo-m/)
