@@ -98,6 +98,15 @@ impl InteractivePMFVerifier {
             expect: asserted_sum,
         }
     }
+
+    fn random_r(&mut self) -> u64 {
+        self.rng.get_random_element()
+    }
+
+    fn soundness_error(&self) -> f64 {
+        let deg = self.poly.num_variables * self.poly.num_multiplicands();
+        (self.poly.num_variables * deg) as f64 / self.p as f64
+    }
 }
 
 // modular inverse (https://www.geeksforgeeks.org/multiplicative-inverse-under-modulo-m/)
