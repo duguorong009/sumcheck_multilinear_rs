@@ -13,7 +13,7 @@ trait RandomGen {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct TrueRandomGen {
     rng: StdRng,
     p: u64,

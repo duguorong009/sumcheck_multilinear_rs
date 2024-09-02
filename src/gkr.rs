@@ -8,11 +8,11 @@ use std::collections::HashMap;
 /// l: number of variables in f2 and f3
 #[derive(Debug)]
 pub struct GKR {
-    f1: HashMap<usize, u64>,
-    f2: Vec<u64>,
-    f3: Vec<u64>,
-    p: u64,
-    l: usize,
+    pub(crate) f1: HashMap<usize, u64>,
+    pub(crate) f2: Vec<u64>,
+    pub(crate) f3: Vec<u64>,
+    pub(crate) p: u64,
+    pub(crate) l: usize,
 }
 
 impl GKR {
