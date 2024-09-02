@@ -78,7 +78,7 @@ impl InteractivePMFVerifier {
         }
         if poly.num_variables == 1 {
             let result = (poly.eval(&[0]) + poly.eval(&[1])) % poly.p;
-            if (asserted_sum - result) % poly.p == 0  {
+            if (asserted_sum - result) % poly.p == 0 {
                 todo!("implement `_convince_and_close` & return")
             } else {
                 todo!("implement `_reject_and_close` & return")
@@ -113,6 +113,85 @@ impl InteractivePMFVerifier {
         let deg = self.poly.num_variables * self.poly.num_multiplicands();
         let min_p = (self.poly.num_variables as f64 * deg as f64) / e;
         min_p.log2().ceil() as usize
+    }
+
+    /// Send this verifier the univariate polynomial P(x). P(x) has degree at most the number of multiplicands.
+    /// :param msgs: [P(0), P(1), ..., P(m)] where m is the number of multiplicands
+    /// :return: accepted, r
+    fn talk(&mut self, msgs: &[u64]) -> (bool, u64) {
+        if !self.active {
+            panic!("Unable to prove: the protocol is not active.");
+        }
+        if msgs.len() != self.poly.num_multiplicands() + 1 {
+            panic!(
+                "Malformed message: Expect {} points, but got {}",
+                self.poly.num_multiplicands() + 1,
+                msgs.len()
+            );
+        }
+
+        let p0 = msgs[0] % self.p;
+        let p1 = msgs[1] % self.p;
+        if (p0 + p1) % self.p != self.expect % self.p {
+            self._reject_and_close();
+            return (false, 0);
+        }
+
+        // pick r at random
+        let r = self.random_r();
+        let pr = interpolate(msgs, r, self.p);
+
+        self.expect = pr;
+        self.points[self.round] = r;
+
+        // if not final step, end here
+        if !(self.round + 1 == self.poly.num_variables) {
+            self.round += 1;
+            return (true, r);
+        }
+
+        // final step: check all
+        if self.checksum_only {
+            // When checksum_only is on, the verifier do not access the polynomial. It only
+            // verifies that the sum of a polynomial is correct.
+            // User often use this verifier as a subroutine, and uses self.subclaim() to get a sub-claim for
+            // the polynomial.
+            self._convince_and_close();
+            return (true, r);
+        }
+
+        let final_sum = self.poly.eval(&self.points);
+        if pr != final_sum {
+            self._reject_and_close();
+            return (false, r);
+        }
+        self._convince_and_close();
+        (true, r)
+    }
+
+    /// The verifier should already checks the sum of the polynomial. If the sum is indeed the sum of polynomial, then
+    /// the sub claim should be correct.
+    /// The sub claim is in the following form:
+    ///  - one point of the polynomial
+    ///  - the expected evaluation at this point
+    /// :return: (point: Vec<u64>, expected: u64)
+    fn subclaim(&self) -> (Vec<u64>, u64) {
+        if !self.convinced {
+            panic!("The verifier is not convinced, and cannot make a sub claim.");
+        }
+        (self.points.clone(), self.expect)
+    }
+
+    /// Accept the sum. Close the protocol.
+    fn _convince_and_close(&mut self) {
+        self.convinced = true;
+        self.active = false;
+    }
+
+    /// Reject the sum. Close the protocol.
+    fn _reject_and_close(&mut self) {
+        self.convinced = false;
+        self.active = false;
     }
 }
 
