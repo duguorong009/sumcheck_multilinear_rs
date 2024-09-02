@@ -5,7 +5,7 @@ use crate::polynomial::MVLinear;
 /// Product of multilinear functions.
 #[derive(Debug, Clone)]
 pub struct PMF {
-    num_variables: usize,
+    pub(crate) num_variables: usize,
     pub(crate) p: u64,
     pub(crate) multiplicands: Vec<MVLinear>,
 }
@@ -30,11 +30,11 @@ impl PMF {
         }
     }
 
-    fn num_multiplicands(&self) -> usize {
+    pub fn num_multiplicands(&self) -> usize {
         self.multiplicands.len()
     }
 
-    fn eval(&self, at: &[u64]) -> u64 {
+    pub fn eval(&self, at: &[u64]) -> u64 {
         let mut s = 1;
         for poly in &self.multiplicands {
             s = (s * poly.eval(at)) % self.p.clone();
