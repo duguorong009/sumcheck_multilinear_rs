@@ -25,3 +25,29 @@ pub struct GKRVerifier {
     phase1_verifier: InteractivePMFVerifier,
     phase2_verifier: Option<InteractivePMFVerifier>,
 }
+
+impl GKRVerifier {
+    pub fn new() -> Self {
+        todo!()
+    }
+
+    pub fn talk_phase1(&mut self, msgs: &[u64]) -> (bool, u64) {
+        todo!()
+    }
+
+    pub fn talk_phase2(&mut self, msgs: &[u64]) -> (bool, u64) {
+        todo!()
+    }
+
+    pub fn _verdict(&mut self) -> bool {
+        todo!()
+    }
+
+    fn get_randomness_u(&self) -> Vec<u64> {
+        todo!()
+    }
+
+    fn get_randomness_v(&self) -> Vec<u64> {
+        todo!()
+    }
+}
