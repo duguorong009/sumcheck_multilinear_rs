@@ -193,6 +193,8 @@ impl InteractivePMFVerifier {
         self.convinced = false;
         self.active = false;
     }
+
+    // TODO: Should implement the "_repr_html_" method ???
 }
 
 // modular inverse (https://www.geeksforgeeks.org/multiplicative-inverse-under-modulo-m/)
