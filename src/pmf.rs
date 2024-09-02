@@ -74,7 +74,7 @@ pub struct DummyPMF {
 
 impl DummyPMF {
     pub fn new(num_multiplicands: usize, num_variables: usize, p: u64) -> DummyPMF {
-        // let _pmf: PMF = PMF::new(vec![MVLinear::new(num_variables, vec![], p.clone())]);
+        let _pmf: PMF = PMF::new(vec![MVLinear::new(num_variables, vec![], p)]);
         DummyPMF {
             num_multiplicands,
             num_variables,
