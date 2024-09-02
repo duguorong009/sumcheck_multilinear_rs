@@ -1,5 +1,5 @@
-use std::collections::HashMap;
 use rand::rngs::ThreadRng;
+use std::collections::HashMap;
 
 use crate::ip_pmf_verifier::InteractivePMFVerifier;
 
@@ -25,4 +25,3 @@ pub struct GKRVerifier {
     phase1_verifier: InteractivePMFVerifier,
     phase2_verifier: Option<InteractivePMFVerifier>,
 }
-
