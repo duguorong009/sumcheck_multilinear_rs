@@ -44,7 +44,7 @@ impl GKRVerifier {
             asserted_sum,
             phase1_verifier: InteractivePMFVerifier::new(
                 // DummyPMF::new(2, gkr.l, gkr.p),   // TODO: SHOULD enable this code after handling the inheritance case
-                PMF::new(vec![MVLinear::new(gkr.l, vec![], gkr.p)]),
+                PMF::new(vec![MVLinear::new(gkr.l, vec![], gkr.p), MVLinear::new(gkr.l, vec![], gkr.p)]),
                 asserted_sum,
                 None,
                 Some(true),
