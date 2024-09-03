@@ -42,7 +42,7 @@ pub struct InteractivePMFVerifier {
     rng: TrueRandomGen,
     pub(crate) active: bool,
     pub(crate) convinced: bool,
-    points: Vec<u64>,
+    pub(crate) points: Vec<u64>,
     round: usize,
     expect: u64,
 }
