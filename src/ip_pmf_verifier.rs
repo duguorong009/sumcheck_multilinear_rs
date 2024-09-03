@@ -40,8 +40,8 @@ pub struct InteractivePMFVerifier {
     poly: PMF,
     asserted_sum: u64,
     rng: TrueRandomGen,
-    active: bool,
-    convinced: bool,
+    pub(crate) active: bool,
+    pub(crate) convinced: bool,
     points: Vec<u64>,
     round: usize,
     expect: u64,
@@ -118,7 +118,7 @@ impl InteractivePMFVerifier {
     /// Send this verifier the univariate polynomial P(x). P(x) has degree at most the number of multiplicands.
     /// :param msgs: [P(0), P(1), ..., P(m)] where m is the number of multiplicands
     /// :return: accepted, r
-    fn talk(&mut self, msgs: &[u64]) -> (bool, u64) {
+    pub fn talk(&mut self, msgs: &[u64]) -> (bool, u64) {
         if !self.active {
             panic!("Unable to prove: the protocol is not active.");
         }
@@ -175,7 +175,7 @@ impl InteractivePMFVerifier {
     ///  - one point of the polynomial
     ///  - the expected evaluation at this point
     /// :return: (point: Vec<u64>, expected: u64)
-    fn subclaim(&self) -> (Vec<u64>, u64) {
+    pub fn subclaim(&self) -> (Vec<u64>, u64) {
         if !self.convinced {
             panic!("The verifier is not convinced, and cannot make a sub claim.");
         }

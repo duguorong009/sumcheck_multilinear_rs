@@ -7,7 +7,7 @@ use crate::{
     pmf::{DummyPMF, PMF}, polynomial::MVLinear,
 };
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq, PartialOrd)]
 pub enum GKRVerifierState {
     PhaseOneListening,
     PhaseTwoListening,
@@ -55,7 +55,33 @@ impl GKRVerifier {
     }
 
     pub fn talk_phase1(&mut self, msgs: &[u64]) -> (bool, u64) {
-        todo!()
+        if self.state != GKRVerifierState::PhaseOneListening {
+            panic!("Verifier is not in phase 1.");
+        }
+
+        let (_, r) = self.phase1_verifier.talk(msgs);
+        if self.phase1_verifier.convinced {
+            let l = self.l;
+            self.phase2_verifier = Some(InteractivePMFVerifier::new(
+                PMF::new(vec![
+                    MVLinear::new(l, vec![], self.p),
+                    MVLinear::new(l, vec![], self.p),
+                ]),
+                self.phase1_verifier.subclaim().1,
+                None,
+                Some(true),
+                self.rng.clone(),
+            ));
+            self.state = GKRVerifierState::PhaseTwoListening;
+            return (true, r);
+        }
+
+        if !self.phase1_verifier.active && !self.phase1_verifier.convinced {
+            self.state = GKRVerifierState::REJECT;
+            return (false, r);
+        }
+
+        (true, r)
     }
 
     pub fn talk_phase2(&mut self, msgs: &[u64]) -> (bool, u64) {
