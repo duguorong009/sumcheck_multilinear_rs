@@ -85,7 +85,21 @@ impl GKRVerifier {
     }
 
     pub fn talk_phase2(&mut self, msgs: &[u64]) -> (bool, u64) {
-        todo!()
+        if self.state != GKRVerifierState::PhaseTwoListening {
+            panic!("Verifier is not in phase 2.");
+        }
+
+        let (_, r) = self.phase2_verifier.as_mut().unwrap().talk(msgs);
+        if self.phase2_verifier.as_mut().unwrap().convinced {
+            return (self._verdict(), r);
+        }
+
+        if !self.phase2_verifier.as_mut().unwrap().active && !self.phase2_verifier.as_mut().unwrap().convinced {
+            self.state = GKRVerifierState::REJECT;
+            return (false, r);
+        }
+
+        (true, r)
     }
 
     pub fn _verdict(&mut self) -> bool {
