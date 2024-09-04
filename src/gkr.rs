@@ -6,7 +6,7 @@ use std::collections::HashMap;
 /// f3: Dense polynomial represented by a map of argument (index) and its evaluation (value).
 /// p: field size
 /// l: number of variables in f2 and f3
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct GKR {
     pub(crate) f1: HashMap<usize, u64>,
     pub(crate) f2: Vec<u64>,

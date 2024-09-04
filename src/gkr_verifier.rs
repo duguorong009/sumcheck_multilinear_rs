@@ -26,7 +26,7 @@ pub struct GKRVerifier {
     g: Vec<u64>,
     p: u64,
     l: usize,
-    asserted_sum: u64,
+    pub(crate) asserted_sum: u64,
     phase1_verifier: InteractivePMFVerifier,
     phase2_verifier: Option<InteractivePMFVerifier>,
 }

@@ -237,6 +237,10 @@ impl GKRProver {
         (a_hg, g, s)
     }
 
+    /// :param A_hg: bookkeeping table h_g
+    /// :param G: precompute cache
+    /// :param s: sum
+    /// :param verifier: GKR verifier
     pub fn prove_to_verifier(
         &self,
         a_hg: &[u64],
@@ -246,6 +250,15 @@ impl GKRProver {
         msg_recorder_phase_1: &mut Option<Vec<Vec<u64>>>,
         msg_recorder_phase_2: &mut Option<Vec<Vec<u64>>>,
     ) {
+        assert!(verifier.asserted_sum == s, "Asserted sum mismatch");
+
+        let (u, f2u) = talk_to_verifier_phase_one(a_hg, self.gkr.clone(), verifier, msg_recorder_phase_1);
+
+        assert!(verifier.state == GKRVerifierState::PhaseTwoListening, "Verifier does not accept phase 1 proof");
+
+        let a_f1 = initialize_phase_two(self.gkr.f1.clone(), g, &u, self.gkr.p);
+        talk_to_verifier_phase_two(&a_f1, self.gkr.clone(), f2u, verifier, msg_recorder_phase_2);
+
         todo!("come back after GKRVerifier is ready")
     }
 }
