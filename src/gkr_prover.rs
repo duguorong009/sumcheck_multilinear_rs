@@ -190,7 +190,15 @@ fn talk_to_verifier_phase_two(
     verifier: GKRVerifier,
     msg_recorder: &mut Option<Vec<Vec<u64>>>,
 ) {
-    todo!("come back after GKRVerifier is ready")
+    let l = gkr.l;
+    let p = gkr.p;
+    let a_f3_f2u: Vec<u64> = gkr.f3.clone().into_iter().map(|x| x * f2u % p).collect();
+
+    assert!(verifier.state == GKRVerifierState::PhaseTwoListening, "Verifier is not in phase two.");
+    assert!(a_f1.len() == 1 << l, "Mismatch A_f1 size and L");
+
+    let As: (Vec<u64>, Vec<u64>) = (a_f1.clone().to_vec(), a_f3_f2u.clone());
+    talk_process(As, l, p, &verifier.talk_phase2, msg_recorder);
 }
 
 #[derive(Debug)]
