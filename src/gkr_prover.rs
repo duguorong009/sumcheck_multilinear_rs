@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use crate::{gkr::GKR, gkr_verifier::GKRVerifier};
+use crate::{gkr::GKR, gkr_verifier::{GKRVerifier, GKRVerifierState}};
 
 /// Change binary form to list of arguments.
 ///
@@ -102,15 +102,15 @@ pub fn initialize_phase_two(f1: HashMap<usize, u64>, g: &[u64], u: &[u64], p: u6
     a_f1
 }
 
-type Talker = dyn Fn(&Vec<u64>) -> (bool, u64);
+// type Talker = dyn Fn(&Vec<u64>) -> (bool, u64);
 
-fn talk_process(
-    mut as_vec: Vec<Vec<u64>>,
+fn talk_process<Talker>(
+    mut as_vec: (Vec<u64>, Vec<u64>),
     l: usize,
     p: u64,
     talker: &Talker,
     msg_recorder: &mut Option<Vec<Vec<u64>>>,
-) {
+) where Talker: Fn(&Vec<u64>) -> (bool, u64) {
     let num_multiplicands = 2;
     for i in 1..=l {
         let mut product_sum: Vec<u64> = vec![0u64.into(); num_multiplicands as usize + 1];
@@ -118,7 +118,11 @@ fn talk_process(
             for t in 0..=num_multiplicands {
                 let mut product = 1;
                 for j in 0..num_multiplicands {
-                    let a = &as_vec[j].clone();
+                    let a = match j {
+                        0 => &as_vec.0.clone(),
+                        1 => &as_vec.1.clone(),
+                        _ => unreachable!(),
+                    };
                     product = product
                         * (((a[b << 1] * ((1 - t as u64) % p))
                             + (a[((b << 1) + 1) as usize] * (t as u64)) % p)
@@ -137,21 +141,46 @@ fn talk_process(
         assert!(result);
         for j in 0..num_multiplicands {
             for b in 0..(1 << (l - i)) {
-                as_vec[j][b as usize] = (as_vec[j][(b << 1) as usize] * (1 - r)
-                    + as_vec[j][((b << 1) + 1) as usize] * r)
-                    % p;
+                match j {
+                    0 => {
+                        as_vec.0[b as usize] = (as_vec.0[(b << 1) as usize] * (1 - r)
+                        + as_vec.0[((b << 1) + 1) as usize] * r)
+                        % p;
+                    }
+                    1 => {
+                        as_vec.1[b as usize] = (as_vec.1[(b << 1) as usize] * (1 - r)
+                        + as_vec.1[((b << 1) + 1) as usize] * r)
+                        % p;
+                    }
+                    _ => unreachable!(),
+                }
             }
         }
     }
 }
 
+/// Attempt to prove to GKR verifier.
+/// 
+/// :param randomGen: add randomness
+/// :param A_hg: Bookkeeping table of hg. A_hg will be modified in-place. Do not reuse it!
+/// :param gkr: The GKR function
+/// :return: randomness, f2(u)
 fn talk_to_verifier_phase_one(
     a_hg: &[u64],
     gkr: GKR,
     verifier: GKRVerifier,
     msg_recorder: &mut Option<Vec<Vec<u64>>>,
 ) -> (Vec<u64>, u64) {
-    todo!("come back after GKRVerifier is ready")
+    // sanity check
+    let l = gkr.l;
+    let p = gkr.p;
+    assert!(verifier.state == GKRVerifierState::PhaseOneListening, "Verifier is not in phase one.");
+    assert!(a_hg.len() == 1 << l, "Mismatch A_hg size and L");
+
+    let As: (Vec<u64>, Vec<u64>) = (a_hg.clone().to_vec(), gkr.f2.clone());
+    talk_process(As, l, p, &verifier.talk_phase1, msg_recorder);
+
+    (verifier.get_randomness_v(), As.1[0])
 }
 
 fn talk_to_verifier_phase_two(
