@@ -1,11 +1,10 @@
-use rand::rngs::ThreadRng;
 use std::collections::HashMap;
 
 use crate::{
     gkr::GKR,
     ip_pmf_verifier::{InteractivePMFVerifier, TrueRandomGen},
     multilinear_extension::{evaluate, evaluate_sparse},
-    pmf::{DummyPMF, PMF},
+    pmf::PMF,
     polynomial::MVLinear,
 };
 
@@ -19,7 +18,7 @@ pub enum GKRVerifierState {
 
 #[derive(Debug)]
 pub struct GKRVerifier {
-    state: GKRVerifierState,
+    pub(crate) state: GKRVerifierState,
     rng: Option<TrueRandomGen>,
     f1: HashMap<usize, u64>,
     f2: Vec<u64>,
@@ -149,7 +148,7 @@ impl GKRVerifier {
         self.phase1_verifier.points.clone()
     }
 
-    fn get_randomness_v(&self) -> Vec<u64> {
+    pub fn get_randomness_v(&self) -> Vec<u64> {
         if self.state != GKRVerifierState::ACCEPT {
             panic!("Not in correct phase.");
         }
