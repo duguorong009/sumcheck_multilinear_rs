@@ -222,8 +222,19 @@ impl GKRProver {
         Self { gkr }
     }
 
+    /// :param g: fixed g
+    /// :return: Bookkeeping table h_g, G: precompute cache, sum
     pub fn init_and_get_sum(&self, g: &[u64]) -> (Vec<u64>, Vec<u64>, u64) {
-        todo!("come back after GKRVerifier is ready")
+        assert!(g.len() == self.gkr.l, "Size of g is incorrect");
+        let (a_hg, g) = initialize_phase_one(
+            self.gkr.f1.clone(),
+            self.gkr.l,
+            self.gkr.p,
+            self.gkr.f3.clone(),
+            g.to_vec(),
+        );
+        let s = sum_of_gkr(&a_hg, &self.gkr.f2, self.gkr.p);
+        (a_hg, g, s)
     }
 
     pub fn prove_to_verifier(
