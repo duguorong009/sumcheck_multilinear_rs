@@ -142,7 +142,9 @@ impl GKRVerifier {
     }
 
     fn get_randomness_u(&self) -> Vec<u64> {
-        if self.state == GKRVerifierState::PhaseOneListening || self.state == GKRVerifierState::REJECT {
+        if self.state == GKRVerifierState::PhaseOneListening
+            || self.state == GKRVerifierState::REJECT
+        {
             panic!("Not in correct phase.");
         }
         self.phase1_verifier.points.clone()
@@ -152,10 +154,6 @@ impl GKRVerifier {
         if self.state != GKRVerifierState::ACCEPT {
             panic!("Not in correct phase.");
         }
-        self.phase2_verifier
-            .as_ref()
-            .unwrap()
-            .points
-            .clone()
+        self.phase2_verifier.as_ref().unwrap().points.clone()
     }
 }

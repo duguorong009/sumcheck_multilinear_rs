@@ -1,6 +1,9 @@
 use std::collections::HashMap;
 
-use crate::{gkr::GKR, gkr_verifier::{GKRVerifier, GKRVerifierState}};
+use crate::{
+    gkr::GKR,
+    gkr_verifier::{GKRVerifier, GKRVerifierState},
+};
 
 /// Change binary form to list of arguments.
 ///
@@ -110,7 +113,9 @@ fn talk_process<Talker>(
     p: u64,
     talker: &Talker,
     msg_recorder: &mut Option<Vec<Vec<u64>>>,
-) where Talker: Fn(&Vec<u64>) -> (bool, u64) {
+) where
+    Talker: Fn(&Vec<u64>) -> (bool, u64),
+{
     let num_multiplicands = 2;
     for i in 1..=l {
         let mut product_sum: Vec<u64> = vec![0u64.into(); num_multiplicands as usize + 1];
@@ -144,13 +149,13 @@ fn talk_process<Talker>(
                 match j {
                     0 => {
                         as_vec.0[b as usize] = (as_vec.0[(b << 1) as usize] * (1 - r)
-                        + as_vec.0[((b << 1) + 1) as usize] * r)
-                        % p;
+                            + as_vec.0[((b << 1) + 1) as usize] * r)
+                            % p;
                     }
                     1 => {
                         as_vec.1[b as usize] = (as_vec.1[(b << 1) as usize] * (1 - r)
-                        + as_vec.1[((b << 1) + 1) as usize] * r)
-                        % p;
+                            + as_vec.1[((b << 1) + 1) as usize] * r)
+                            % p;
                     }
                     _ => unreachable!(),
                 }
@@ -160,7 +165,7 @@ fn talk_process<Talker>(
 }
 
 /// Attempt to prove to GKR verifier.
-/// 
+///
 /// :param randomGen: add randomness
 /// :param A_hg: Bookkeeping table of hg. A_hg will be modified in-place. Do not reuse it!
 /// :param gkr: The GKR function
@@ -174,7 +179,10 @@ fn talk_to_verifier_phase_one(
     // sanity check
     let l = gkr.l;
     let p = gkr.p;
-    assert!(verifier.state == GKRVerifierState::PhaseOneListening, "Verifier is not in phase one.");
+    assert!(
+        verifier.state == GKRVerifierState::PhaseOneListening,
+        "Verifier is not in phase one."
+    );
     assert!(a_hg.len() == 1 << l, "Mismatch A_hg size and L");
 
     let As: (Vec<u64>, Vec<u64>) = (a_hg.clone().to_vec(), gkr.f2.clone());
@@ -194,7 +202,10 @@ fn talk_to_verifier_phase_two(
     let p = gkr.p;
     let a_f3_f2u: Vec<u64> = gkr.f3.clone().into_iter().map(|x| x * f2u % p).collect();
 
-    assert!(verifier.state == GKRVerifierState::PhaseTwoListening, "Verifier is not in phase two.");
+    assert!(
+        verifier.state == GKRVerifierState::PhaseTwoListening,
+        "Verifier is not in phase two."
+    );
     assert!(a_f1.len() == 1 << l, "Mismatch A_f1 size and L");
 
     let As: (Vec<u64>, Vec<u64>) = (a_f1.clone().to_vec(), a_f3_f2u.clone());
