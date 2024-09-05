@@ -16,7 +16,7 @@ impl PMF {
             panic!("Multiplicands are empty.");
         }
         let mut num_variables = multiplicands[0].num_variables;
-        let p = multiplicands[0].p.clone();
+        let p = multiplicands[0].p;
         for poly in &multiplicands {
             num_variables = num_variables.max(poly.num_variables);
             if poly.p != p {
@@ -37,7 +37,7 @@ impl PMF {
     pub fn eval(&self, at: &[u64]) -> u64 {
         let mut s = 1;
         for poly in &self.multiplicands {
-            s = (s * poly.eval(at)) % self.p.clone();
+            s = (s * poly.eval(at)) % self.p;
         }
         s
     }

@@ -118,7 +118,7 @@ fn talk_process<Talker>(
 {
     let num_multiplicands = 2;
     for i in 1..=l {
-        let mut product_sum: Vec<u64> = vec![0u64.into(); num_multiplicands as usize + 1];
+        let mut product_sum: Vec<u64> = vec![0; num_multiplicands as usize + 1];
         for b in 0..(1 << (l - i)) {
             for t in 0..=num_multiplicands {
                 let mut product = 1;
@@ -130,7 +130,7 @@ fn talk_process<Talker>(
                     };
                     product = product
                         * (((a[b << 1] * ((1 - t as u64) % p))
-                            + (a[((b << 1) + 1) as usize] * (t as u64)) % p)
+                            + (a[(b << 1) + 1] * (t as u64)) % p)
                             % p)
                         % p;
                 }
@@ -185,10 +185,16 @@ fn talk_to_verifier_phase_one(
     );
     assert!(a_hg.len() == 1 << l, "Mismatch A_hg size and L");
 
-    let As: (Vec<u64>, Vec<u64>) = (a_hg.to_vec(), gkr.f2.clone());
-    talk_process(As.clone(), l, p, &mut |arg| verifier.talk_phase1(arg), msg_recorder);
+    let r#as: (Vec<u64>, Vec<u64>) = (a_hg.to_vec(), gkr.f2.clone());
+    talk_process(
+        r#as.clone(),
+        l,
+        p,
+        &mut |arg| verifier.talk_phase1(arg),
+        msg_recorder,
+    );
 
-    (verifier.get_randomness_v(), As.1[0])
+    (verifier.get_randomness_v(), r#as.1[0])
 }
 
 fn talk_to_verifier_phase_two(
@@ -208,8 +214,14 @@ fn talk_to_verifier_phase_two(
     );
     assert!(a_f1.len() == 1 << l, "Mismatch A_f1 size and L");
 
-    let As: (Vec<u64>, Vec<u64>) = (a_f1.to_vec(), a_f3_f2u.clone());
-    talk_process(As, l, p, &mut |arg| verifier.talk_phase2(arg), msg_recorder);
+    let r#as: (Vec<u64>, Vec<u64>) = (a_f1.to_vec(), a_f3_f2u.clone());
+    talk_process(
+        r#as,
+        l,
+        p,
+        &mut |arg| verifier.talk_phase2(arg),
+        msg_recorder,
+    );
 }
 
 #[derive(Debug)]
@@ -252,9 +264,13 @@ impl GKRProver {
     ) {
         assert!(verifier.asserted_sum == s, "Asserted sum mismatch");
 
-        let (u, f2u) = talk_to_verifier_phase_one(a_hg, self.gkr.clone(), verifier, msg_recorder_phase_1);
+        let (u, f2u) =
+            talk_to_verifier_phase_one(a_hg, self.gkr.clone(), verifier, msg_recorder_phase_1);
 
-        assert!(verifier.state == GKRVerifierState::PhaseTwoListening, "Verifier does not accept phase 1 proof");
+        assert!(
+            verifier.state == GKRVerifierState::PhaseTwoListening,
+            "Verifier does not accept phase 1 proof"
+        );
 
         let a_f1 = initialize_phase_two(self.gkr.f1.clone(), g, &u, self.gkr.p);
         talk_to_verifier_phase_two(&a_f1, self.gkr.clone(), f2u, verifier, msg_recorder_phase_2);

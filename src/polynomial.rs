@@ -107,7 +107,7 @@ impl MVLinear {
             let t_shifted = t >> s;
             new_terms.insert(
                 t_shifted,
-                (new_terms.get(&t_shifted).unwrap_or(&0u64.into()) + v) % self.p,
+                (new_terms.get(&t_shifted).unwrap_or(&0) + v) % self.p,
             );
         }
         MVLinear::new(

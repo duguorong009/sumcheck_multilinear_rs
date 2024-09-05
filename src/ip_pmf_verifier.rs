@@ -1,7 +1,4 @@
-use rand::{
-    rngs::{StdRng, ThreadRng},
-    Rng, SeedableRng,
-};
+use rand::{rngs::StdRng, Rng, SeedableRng};
 
 use crate::pmf::PMF;
 
@@ -174,7 +171,8 @@ impl InteractivePMFVerifier {
     /// The sub claim is in the following form:
     ///  - one point of the polynomial
     ///  - the expected evaluation at this point
-    /// :return: (point: Vec<u64>, expected: u64)
+    ///
+    ///     :return: (point: Vec<u64>, expected: u64)
     pub fn subclaim(&self) -> (Vec<u64>, u64) {
         if !self.convinced {
             panic!("The verifier is not convinced, and cannot make a sub claim.");
