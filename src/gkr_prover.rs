@@ -111,10 +111,10 @@ fn talk_process<Talker>(
     mut as_vec: (Vec<u64>, Vec<u64>),
     l: usize,
     p: u64,
-    talker: &Talker,
+    talker: &mut Talker,
     msg_recorder: &mut Option<Vec<Vec<u64>>>,
 ) where
-    Talker: Fn(&Vec<u64>) -> (bool, u64),
+    Talker: FnMut(&Vec<u64>) -> (bool, u64),
 {
     let num_multiplicands = 2;
     for i in 1..=l {
@@ -173,7 +173,7 @@ fn talk_process<Talker>(
 fn talk_to_verifier_phase_one(
     a_hg: &[u64],
     gkr: GKR,
-    verifier: GKRVerifier,
+    verifier: &mut GKRVerifier,
     msg_recorder: &mut Option<Vec<Vec<u64>>>,
 ) -> (Vec<u64>, u64) {
     // sanity check
@@ -185,8 +185,8 @@ fn talk_to_verifier_phase_one(
     );
     assert!(a_hg.len() == 1 << l, "Mismatch A_hg size and L");
 
-    let As: (Vec<u64>, Vec<u64>) = (a_hg.clone().to_vec(), gkr.f2.clone());
-    talk_process(As, l, p, &verifier.talk_phase1, msg_recorder);
+    let As: (Vec<u64>, Vec<u64>) = (a_hg.to_vec(), gkr.f2.clone());
+    talk_process(As.clone(), l, p, &mut |arg| verifier.talk_phase1(arg), msg_recorder);
 
     (verifier.get_randomness_v(), As.1[0])
 }
@@ -195,7 +195,7 @@ fn talk_to_verifier_phase_two(
     a_f1: &[u64],
     gkr: GKR,
     f2u: u64,
-    verifier: GKRVerifier,
+    verifier: &mut GKRVerifier,
     msg_recorder: &mut Option<Vec<Vec<u64>>>,
 ) {
     let l = gkr.l;
@@ -208,8 +208,8 @@ fn talk_to_verifier_phase_two(
     );
     assert!(a_f1.len() == 1 << l, "Mismatch A_f1 size and L");
 
-    let As: (Vec<u64>, Vec<u64>) = (a_f1.clone().to_vec(), a_f3_f2u.clone());
-    talk_process(As, l, p, &verifier.talk_phase2, msg_recorder);
+    let As: (Vec<u64>, Vec<u64>) = (a_f1.to_vec(), a_f3_f2u.clone());
+    talk_process(As, l, p, &mut |arg| verifier.talk_phase2(arg), msg_recorder);
 }
 
 #[derive(Debug)]
@@ -246,7 +246,7 @@ impl GKRProver {
         a_hg: &[u64],
         g: &[u64],
         s: u64,
-        verifier: GKRVerifier,
+        verifier: &mut GKRVerifier,
         msg_recorder_phase_1: &mut Option<Vec<Vec<u64>>>,
         msg_recorder_phase_2: &mut Option<Vec<Vec<u64>>>,
     ) {
@@ -258,7 +258,5 @@ impl GKRProver {
 
         let a_f1 = initialize_phase_two(self.gkr.f1.clone(), g, &u, self.gkr.p);
         talk_to_verifier_phase_two(&a_f1, self.gkr.clone(), f2u, verifier, msg_recorder_phase_2);
-
-        todo!("come back after GKRVerifier is ready")
     }
 }
