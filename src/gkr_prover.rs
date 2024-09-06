@@ -281,7 +281,10 @@ impl GKRProver {
 mod tests {
     use rand::Rng;
 
-    use crate::polynomial::{random_mvlinear, random_prime, MVLinear};
+    use crate::{
+        multilinear_extension::extend_sparse,
+        polynomial::{random_mvlinear, random_prime, MVLinear},
+    };
 
     use super::*;
 
@@ -318,4 +321,46 @@ mod tests {
         (a, s)
     }
 
+    #[test]
+    fn test_initialize_phase_one_two() {
+        let mut rng = rand::thread_rng();
+
+        let l = 5;
+        let p = random_prime(32);
+        println!(
+            "Testing GKR Prover Bookkeeping table generator functions... Use L = {l}, p = {p}"
+        );
+
+        // generate random sparse f1, random f3, g
+        let d_f1 = generate_random_f1(l, p);
+        let f3 = random_mvlinear(l, Some(p), Some(32));
+        let g: Vec<u64> = (0..(1 << l)).map(|_| rng.gen_range(0..p)).collect();
+
+        // get bookkeeping table for f3
+        let (a_f3, _) = calculate_bookkeeping_table(f3);
+
+        // get poly form for f1 (only for test checking)
+        let mut a_f1 = vec![0; 1 << (3 * l)];
+        for (k, v) in d_f1.iter() {
+            a_f1[*k] = *v;
+        }
+
+        let d_f1_: Vec<(usize, u64)> = d_f1.clone().into_iter().collect();
+        let f1 = extend_sparse(&d_f1_, 3 * l, p);
+
+        let f1_fix_g = f1.eval_part(&g);
+        assert!(f1_fix_g.num_variables == 2 * l);
+
+        let mut a_hg_expected: Vec<u64> = vec![0; 1 << l];
+        for i in 0..(1 << (2 * l)) {
+            let x = i & ((1 << l) - 1);
+            let y = (i & (((1 << l) - 1) << l)) >> l;
+            a_hg_expected[x] = (a_hg_expected[x] + f1_fix_g.eval_bin(i) * a_f3[y]) % p;
+        }
+        let (a_hg_actual, G) = initialize_phase_one(d_f1, l, p, a_f3, g);
+        for i in 0..(1 << l) {
+            assert!(a_hg_expected[i] % p == a_hg_actual[i] % p);
+        }
+        println!("PASS: initialize_PhaseOne");
+    }
 }

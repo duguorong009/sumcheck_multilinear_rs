@@ -89,7 +89,7 @@ impl MVLinear {
     /// Evaluate part of the arguments of the multilinear polynomial.
     ///
     /// `args`: arguments at beginning
-    fn eval_part(&self, args: &[u64]) -> MVLinear {
+    pub fn eval_part(&self, args: &[u64]) -> MVLinear {
         let s = args.len();
         if s > self.num_variables {
             panic!("len(args) > self.num_variables");
