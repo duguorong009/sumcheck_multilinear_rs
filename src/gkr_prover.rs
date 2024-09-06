@@ -9,7 +9,7 @@ use crate::{
 ///
 /// `b`: The binary form in little endian encoding. For example, 0b1011 means g(x0=1, x1=1, x2=0, x3=1)
 /// `num_variables`: number of variables
-pub fn binary_to_list(mut b: usize, num_variables: usize) -> Vec<usize> {
+pub fn binary_to_list(mut b: u64, num_variables: usize) -> Vec<u64> {
     let mut lst = vec![0; num_variables];
     let mut i = 0;
     while b != 0 {
@@ -281,6 +281,8 @@ impl GKRProver {
 mod tests {
     use rand::Rng;
 
+    use crate::polynomial::{random_mvlinear, random_prime, MVLinear};
+
     use super::*;
 
     fn generate_random_f1(l: usize, p: u64) -> HashMap<usize, u64> {
@@ -302,4 +304,18 @@ mod tests {
         let f3 = (0..(1 << l)).map(|_| rng.gen_range(0..p)).collect();
         GKR { l, p, f1, f2, f3 }
     }
+
+    /// :return: A bookkeeping table where the index is the binary form of argument of polynomial and value is the
+    /// evaluated value; the sum
+    fn calculate_bookkeeping_table(poly: MVLinear) -> (Vec<u64>, u64) {
+        let pp = poly.p;
+        let mut a: Vec<u64> = vec![0; 1 << poly.num_variables];
+        let mut s = 0;
+        for p in 0..((1 << poly.num_variables) as u64) {
+            a[p as usize] = poly.eval(&binary_to_list(p, poly.num_variables));
+            s = (s + a[p as usize]) % pp;
+        }
+        (a, s)
+    }
+
 }
