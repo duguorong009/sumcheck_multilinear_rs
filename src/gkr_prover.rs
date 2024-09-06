@@ -276,3 +276,30 @@ impl GKRProver {
         talk_to_verifier_phase_two(&a_f1, self.gkr.clone(), f2u, verifier, msg_recorder_phase_2);
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use rand::Rng;
+
+    use super::*;
+
+    fn generate_random_f1(l: usize, p: u64) -> HashMap<usize, u64> {
+        let mut rng = rand::thread_rng();
+        let n = ((1 << (3 * l)) as f64).sqrt() as usize;
+        let mut ans = HashMap::new();
+        for _ in 0..n {
+            let term = rng.gen_range(0..(1 << 3 * l));
+            let ev = rng.gen_range(0..p);
+            ans.insert(term, ev);
+        }
+        ans
+    }
+
+    fn random_gkr(l: usize, p: u64) -> GKR {
+        let mut rng = rand::thread_rng();
+        let f1 = generate_random_f1(l, p);
+        let f2 = (0..(1 << l)).map(|_| rng.gen_range(0..p)).collect();
+        let f3 = (0..(1 << l)).map(|_| rng.gen_range(0..p)).collect();
+        GKR { l, p, f1, f2, f3 }
+    }
+}
