@@ -335,7 +335,7 @@ pub fn random_prime(bit_length: usize) -> u64 {
 }
 
 // Function to create a random MVLinear
-fn random_mvlinear(
+pub fn random_mvlinear(
     num_variables: usize,
     prime: Option<u64>,
     prime_bit_length: Option<usize>,
