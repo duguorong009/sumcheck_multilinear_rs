@@ -357,10 +357,27 @@ mod tests {
             let y = (i & (((1 << l) - 1) << l)) >> l;
             a_hg_expected[x] = (a_hg_expected[x] + f1_fix_g.eval_bin(i) * a_f3[y]) % p;
         }
-        let (a_hg_actual, G) = initialize_phase_one(d_f1, l, p, a_f3, g);
+        let (a_hg_actual, G) = initialize_phase_one(d_f1.clone(), l, p, a_f3, g);
         for i in 0..(1 << l) {
             assert!(a_hg_expected[i] % p == a_hg_actual[i] % p);
         }
         println!("PASS: initialize_PhaseOne");
+
+        // phase 2
+        let u: Vec<u64> = (0..l).map(|_| rng.gen_range(0..p)).collect();
+        let f1_fix_gu = f1_fix_g.eval_part(&u);
+        assert!(f1_fix_gu.num_variables == l);
+
+        let mut a_f1_expected: Vec<u64> = vec![0; 1 << l];
+        for i in 0..(1 << l) {
+            let y = i & ((1 << l) - 1);
+            a_f1_expected[y] = f1_fix_gu.eval_bin(y);
+        }
+
+        let a_f1_actual = initialize_phase_two(d_f1, &G, &u, p);
+        for i in 0..(1 << l) {
+            assert!(a_f1_expected[i] % p == a_f1_actual[i] % p);
+        }
+        println!("PASS: initialize_PhaseTwo");
     }
 }
