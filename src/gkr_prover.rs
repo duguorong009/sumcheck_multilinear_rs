@@ -282,7 +282,7 @@ mod tests {
     use rand::Rng;
 
     use crate::{
-        multilinear_extension::extend_sparse,
+        multilinear_extension::{evaluate, extend_sparse},
         polynomial::{random_mvlinear, random_prime, MVLinear},
     };
 
@@ -379,6 +379,44 @@ mod tests {
             assert!(a_f1_expected[i] % p == a_f1_actual[i] % p);
         }
         println!("PASS: initialize_PhaseTwo");
+    }
+
+    #[test]
+    fn test_completeness_sanity() {
+        println!("Test Completeness of GKR protocol (test individual functions");
+        let L = 7;
+        let p = random_prime(32);
+        let gkr = random_gkr(L, p);
+        let g: Vec<u64> = (0..L).map(|_| rand::thread_rng().gen_range(0..p)).collect();
+
+        let (A_hg, G) = initialize_phase_one(gkr.f1.clone(), L, p, gkr.f3.clone(), g.clone());
+        let s = sum_of_gkr(&A_hg, &gkr.f2, p);
+        let mut v = GKRVerifier::new(gkr.clone(), g, s, None);
+        assert!(
+            v.state == GKRVerifierState::PhaseOneListening,
+            "Wrong verifier state"
+        );
+
+        let (u, f2u) = talk_to_verifier_phase_one(&A_hg, gkr.clone(), &mut v, &mut None);
+        assert!(u.len() == L, "wrong randomness size");
+        assert!(
+            v.state == GKRVerifierState::PhaseTwoListening,
+            "verifier should be in phase two"
+        );
+        assert!(
+            f2u % p == evaluate(&gkr.f2, &u, p) % p,
+            "f2(u) returned by talk_to_verifier_phase_one is incorrect"
+        );
+
+        println!("initialize_phase_one, sum_of_gkr, talk_to_verifier_phase_one looks good. ");
+        let A_f1 = initialize_phase_two(gkr.f1.clone(), &G, &u, p);
+        talk_to_verifier_phase_two(&A_f1, gkr.clone(), f2u, &mut v, &mut None);
+        assert!(
+            v.state == GKRVerifierState::ACCEPT,
+            "verifier does not accept this proof. "
+        );
+        println!("initialize_phase_two, talk_to_verifier_phase_two looks good. ");
+        println!("Completeness test PASS!");
     }
 
     #[test]
