@@ -380,4 +380,31 @@ mod tests {
         }
         println!("PASS: initialize_PhaseTwo");
     }
+
+    #[test]
+    fn test_protocol_comprehensive() {
+        let num_tests = 10;
+        let Ls = vec![10, 11, 12];
+        println!("Performing GKR interactive protocol comprehensive test...");
+        for i in 0..num_tests {
+            let p = random_prime(32);
+            let L = Ls[i % Ls.len()];
+            println!("test #{}: |g|=|x|=|y| = {L}: TESTING", i + 1);
+            let gkr = random_gkr(L, p);
+            let g: Vec<u64> = (0..L).map(|_| rand::thread_rng().gen_range(0..p)).collect();
+
+            let pv = GKRProver::new(gkr.clone());
+            let (A_hg, G, s) = pv.init_and_get_sum(&g);
+
+            let mut v = GKRVerifier::new(gkr, g, s, None);
+            assert!(
+                v.state == GKRVerifierState::PhaseOneListening,
+                "Verifier sanity check failed"
+            );
+            pv.prove_to_verifier(&A_hg, &G, s, &mut v, &mut None, &mut None);
+            assert!(v.state == GKRVerifierState::ACCEPT);
+            println!("PASS");
+        }
+        println!("ALL GKR interactive protocol comprehensive tests PASSED!");
+    }
 }
