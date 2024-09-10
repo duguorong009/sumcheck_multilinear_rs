@@ -22,17 +22,25 @@ pub fn binary_to_list(mut b: u64, num_variables: usize) -> Vec<u64> {
 
 pub fn precompute(g: Vec<u64>, p: u64) -> Vec<u64> {
     let l = g.len();
-    let mut g = vec![0; 1 << l];
-    g[0] = 1 - g[0];
-    g[1] = g[0];
+    let mut G: Vec<i128> = vec![0; 1 << l];
+    G[0] = 1 - g[0] as i128;
+    G[1] = g[0] as i128;
     for i in 1..l {
-        let old_g = g.clone();
+        let old_G = G.clone();
         for b in 0..1 << i {
-            g[b] = old_g[b] * (1 - g[i]) % p;
-            g[b + (1 << i)] = old_g[b] * g[i] % p;
+            G[b] = match old_G[b] * (1 - g[i] as i128) {
+                x if x >= 0 => x % p as i128,
+                x if x < 0 => x % p as i128 + p as i128,
+                _ => unreachable!(),
+            };
+            G[b + (1 << i)] = match old_G[b] * g[i] as i128 {
+                x if x >= 0 => x % p as i128,
+                x if x < 0 => x % p as i128 + p as i128,
+                _ => unreachable!(),
+            };
         }
     }
-    g
+    G.into_iter().map(|x| x.try_into().unwrap()).collect()
 }
 
 /// Split the argument into three parts.
@@ -66,14 +74,14 @@ pub fn initialize_phase_one(
     assert!(g.len() == l);
 
     let mut a_hg = vec![0; 1 << l];
-    let g = precompute(g, p);
+    let G = precompute(g, p);
 
     // rely on sparsity
     for (arg, ev) in f1.into_iter() {
         let (z, x, y) = _three_split(arg, l);
-        a_hg[x] += g[z] * ev * a_f3[y] % p;
+        a_hg[x] = (a_hg[x] + G[z] * ev * a_f3[y]) % p;
     }
-    (a_hg, g)
+    (a_hg, G)
 }
 
 /// calculate the sum of the GKR.
@@ -334,7 +342,7 @@ mod tests {
         // generate random sparse f1, random f3, g
         let d_f1 = generate_random_f1(l, p);
         let f3 = random_mvlinear(l, Some(p), Some(32));
-        let g: Vec<u64> = (0..(1 << l)).map(|_| rng.gen_range(0..p)).collect();
+        let g: Vec<u64> = (0..l).map(|_| rng.gen_range(0..p)).collect();
 
         // get bookkeeping table for f3
         let (a_f3, _) = calculate_bookkeeping_table(f3);
