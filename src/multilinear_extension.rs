@@ -1,5 +1,7 @@
 use std::collections::HashMap;
 
+use halo2curves::ff::PrimeField;
+
 use crate::polynomial::{make_mvlinear_constructor, MVLinear};
 
 /// Convert an array to a polynomial where the argument is the binary form of index.
@@ -7,14 +9,16 @@ use crate::polynomial::{make_mvlinear_constructor, MVLinear};
 /// `data`: Array of size 2^l. If the size of array is not power of 2, out-of-range part will be arbitrary.
 /// `field_size`: The size of the finite field that the array value belongs.
 ///
-pub fn extend(data: &[u64], field_size: u64) -> MVLinear {
+pub fn extend<F>(data: &[F]) -> MVLinear<F>
+where
+    F: PrimeField + Clone,
+{
     let l = (data.len() as f64).log2().ceil() as usize;
-    let p = field_size;
-    let gen = make_mvlinear_constructor(l, p);
-    let x: Vec<MVLinear> = (0..l).map(|i| gen(vec![(1 << i, 1)])).collect();
+    let gen = make_mvlinear_constructor(l);
+    let x: Vec<MVLinear<F>> = (0..l).map(|i| gen(vec![(1 << i, F::ONE)])).collect();
 
-    let mut poly_terms: HashMap<usize, u64> = (0..2usize.pow(l.try_into().unwrap()))
-        .map(|i| (i, 0))
+    let mut poly_terms: HashMap<usize, F> = (0..2usize.pow(l.try_into().unwrap()))
+        .map(|i| (i, F::ZERO))
         .collect();
 
     for b in 0..data.len() {
@@ -34,7 +38,7 @@ pub fn extend(data: &[u64], field_size: u64) -> MVLinear {
             sub_poly *= _product1mx(&xi0, 0, xi0.len() - 1);
         }
         for (t, v) in sub_poly.terms {
-            poly_terms.insert(t, (poly_terms.get(&t).unwrap() + v) % p);
+            poly_terms.insert(t, *poly_terms.get(&t).unwrap() + v);
         }
     }
 
@@ -46,14 +50,16 @@ pub fn extend(data: &[u64], field_size: u64) -> MVLinear {
 /// `data`: sparse map if index < 2^L. If the size of the array is not power of 2, out-of-range part will be arbitrary.
 /// `num_var`: number of variables
 /// `field_size`: The size of the finite field that the array value belongs.
-pub fn extend_sparse(data: &[(usize, u64)], num_var: usize, field_size: u64) -> MVLinear {
+pub fn extend_sparse<F>(data: &[(usize, F)], num_var: usize) -> MVLinear<F>
+where
+    F: PrimeField + Clone,
+{
     let l = num_var;
-    let p = field_size;
-    let gen = make_mvlinear_constructor(l, p);
-    let x: Vec<MVLinear> = (0..l).map(|i| gen(vec![(1 << i, 1)])).collect();
+    let gen = make_mvlinear_constructor(l);
+    let x: Vec<MVLinear<F>> = (0..l).map(|i| gen(vec![(1 << i, F::ONE)])).collect();
 
-    let mut poly_terms: HashMap<usize, u64> = (0..2usize.pow(l.try_into().unwrap()))
-        .map(|i| (i, 0))
+    let mut poly_terms: HashMap<usize, F> = (0..2usize.pow(l.try_into().unwrap()))
+        .map(|i| (i, F::ZERO))
         .collect();
 
     for (b, vb) in data {
@@ -71,7 +77,7 @@ pub fn extend_sparse(data: &[(usize, u64)], num_var: usize, field_size: u64) -> 
             sub_poly *= _product1mx(&xi0, 0, xi0.len() - 1);
         }
         for (t, v) in sub_poly.terms {
-            poly_terms.insert(t, (poly_terms.get(&t).unwrap() + v) % p);
+            poly_terms.insert(t, *poly_terms.get(&t).unwrap() + v);
         }
     }
     gen(poly_terms.into_iter().collect())
@@ -81,12 +87,15 @@ pub fn extend_sparse(data: &[(usize, u64)], num_var: usize, field_size: u64) -> 
 ///
 /// **NOTE**: When `xs` is empty, the result will be 1.
 /// This should be handled by the caller.
-fn _product1mx(xs: &[MVLinear], lo: usize, hi: usize) -> MVLinear {
+fn _product1mx<F>(xs: &[MVLinear<F>], lo: usize, hi: usize) -> MVLinear<F>
+where
+    F: PrimeField + Clone,
+{
     assert!(hi >= lo);
     assert!(!xs.is_empty());
 
     if lo == hi {
-        return 1u64 - xs[lo].clone();
+        return MVLinear::from(F::ONE) - xs[lo].clone();
     }
 
     let left = _product1mx(xs, lo, lo + (hi - lo) / 2);
@@ -99,20 +108,22 @@ fn _product1mx(xs: &[MVLinear], lo: usize, hi: usize) -> MVLinear {
 /// `data`: The bookkeeping table (where the multilinear extension is based on)
 /// `arguments`: Input argument
 /// `field_size`: The size of the finite field that the array value belongs.
-pub fn evaluate(data: &[u64], arguments: &[u64], field_size: u64) -> u64 {
+pub fn evaluate<F>(data: &[F], arguments: &[F]) -> F
+where
+    F: PrimeField + Clone,
+{
     let l = arguments.len();
-    let p = field_size;
     assert!(data.len() <= (1 << l));
 
     let mut a = data.to_vec();
     if a.len() < (1 << l) {
-        a.resize(1 << l, 0);
+        a.resize(1 << l, F::ZERO);
     }
 
     for i in 1..l + 1 {
         let r = arguments[i - 1];
         for b in 0..2usize.pow((l - i).try_into().unwrap()) {
-            a[b] = (a[b << 1] * (1 + p - r) + a[(b << 1) + 1] * r) % p;
+            a[b] = a[b << 1] * (F::ONE - r) + a[(b << 1) + 1] * r;
         }
     }
     a[0]
@@ -123,20 +134,22 @@ pub fn evaluate(data: &[u64], arguments: &[u64], field_size: u64) -> u64 {
 /// `data`: dictionary indicating a map between binary argument and its value (sparse bookkeeping table)
 /// `arguments`: Input argument
 /// `field_size`: The size of the finite field that the array value belongs.
-pub fn evaluate_sparse(data: &[(usize, u64)], arguments: &[u64], field_size: u64) -> u64 {
+pub fn evaluate_sparse<F>(data: &[(usize, F)], arguments: &[F]) -> F
+where
+    F: PrimeField + Clone,
+{
     let l = arguments.len();
-    let p = field_size;
 
     let mut dp0 = data.to_vec();
-    let mut dp1: HashMap<usize, u64> = HashMap::new();
+    let mut dp1: HashMap<usize, F> = HashMap::new();
     for i in 0..l {
         let r = arguments[i];
         for (k, v) in dp0 {
-            dp1.entry(k >> 1).or_insert_with(|| 0);
+            dp1.entry(k >> 1).or_insert_with(|| F::ZERO);
             if k & 1 == 0 {
-                dp1.insert(k >> 1, (dp1.get(&(k >> 1)).unwrap() + v * (1 + p - r)) % p);
+                dp1.insert(k >> 1, *dp1.get(&(k >> 1)).unwrap() + v * (F::ONE - r));
             } else {
-                dp1.insert(k >> 1, (dp1.get(&(k >> 1)).unwrap() + v * r) % p);
+                dp1.insert(k >> 1, *dp1.get(&(k >> 1)).unwrap() + v * r);
             }
         }
         dp0 = dp1.into_iter().collect();
@@ -150,7 +163,8 @@ pub fn evaluate_sparse(data: &[(usize, u64)], arguments: &[u64], field_size: u64
 
 #[cfg(test)]
 mod tests {
-    use rand::Rng;
+    use halo2curves::{bn256::Fr, ff::Field};
+    use rand::{rngs::OsRng, Rng};
 
     use crate::polynomial::random_prime;
 
@@ -159,12 +173,11 @@ mod tests {
     #[test]
     fn test_extend() {
         // Create a random number generator
-        let mut rng = rand::thread_rng();
+        let mut rng = OsRng;
 
         for t in 0..1 {
-            let p = random_prime(32);
-            let arr: Vec<u64> = (0..1024).map(|_| rng.gen_range(0..p)).collect();
-            let poly = extend(&arr, p);
+            let arr: Vec<Fr> = (0..1024).map(|_| Fr::random(rng)).collect();
+            let poly = extend(&arr);
             for _ in 0..poly.num_variables.pow(2) {
                 let i = rng.gen_range(0..arr.len());
                 assert!(arr[i] == poly.eval_bin(i));
@@ -175,18 +188,17 @@ mod tests {
 
     #[test]
     fn test_extend_sparse() {
-        let mut rng = rand::thread_rng();
+        let mut rng = OsRng;
 
         for t in 0..1 {
-            let p = random_prime(32);
             let l = 10;
-            let data: HashMap<usize, u64> = (0..256)
-                .map(|_| (rng.gen_range(0..1 << l), rng.gen_range(0..p)))
+            let data: HashMap<usize, Fr> = (0..256)
+                .map(|_| (rng.gen_range(0..1 << l), Fr::random(rng)))
                 .collect();
-            let data_vec: Vec<(usize, u64)> = data.clone().into_iter().collect();
-            let poly = extend_sparse(&data_vec, l, p);
+            let data_vec: Vec<(usize, Fr)> = data.clone().into_iter().collect();
+            let poly = extend_sparse(&data_vec, l);
             for k in 0..1 << l {
-                let zero = 0;
+                let zero = Fr::zero();
                 let expected = data.get(&k).unwrap_or(&zero);
                 let actual = poly.eval_bin(k);
                 assert!(*expected == actual);
@@ -197,31 +209,30 @@ mod tests {
 
     #[test]
     fn test_evaluate() {
-        let mut rng = rand::thread_rng();
+        let mut rng = OsRng;
 
         for _ in 0..1 {
             let p = random_prime(32);
             let l = 8;
-            let arr: Vec<u64> = (0..1 << l).map(|_| rng.gen_range(0..p)).collect();
-            let poly = extend(&arr, p);
-            let args: Vec<u64> = (0..l).map(|_| rng.gen_range(0..p)).collect();
-            assert!(poly.eval(&args) == evaluate(&arr, &args, p));
+            let arr: Vec<Fr> = (0..1 << l).map(|_| Fr::random(rng)).collect();
+            let poly = extend(&arr);
+            let args: Vec<Fr> = (0..l).map(|_| Fr::random(rng)).collect();
+            assert!(poly.eval(&args) == evaluate(&arr, &args));
         }
     }
 
     #[test]
     fn test_evaluate_sparse() {
-        let mut rng = rand::thread_rng();
+        let mut rng = OsRng;
         for _ in 0..1 {
-            let p = random_prime(32);
             let l = 9;
-            let data: HashMap<usize, u64> = (0..1 << 3)
-                .map(|_| (rng.gen_range(0..1 << l), rng.gen_range(0..p)))
+            let data: HashMap<usize, Fr> = (0..1 << 3)
+                .map(|_| (rng.gen_range(0..1 << l), Fr::random(rng)))
                 .collect();
-            let data_vec: Vec<(usize, u64)> = data.clone().into_iter().collect();
-            let poly = extend_sparse(&data_vec, l, p);
-            let args: Vec<u64> = (0..l).map(|_| rng.gen_range(0..p)).collect();
-            assert!(poly.eval(&args) == evaluate_sparse(&data_vec, &args, p));
+            let data_vec: Vec<(usize, Fr)> = data.clone().into_iter().collect();
+            let poly = extend_sparse(&data_vec, l);
+            let args: Vec<Fr> = (0..l).map(|_| Fr::random(rng)).collect();
+            assert!(poly.eval(&args) == evaluate_sparse(&data_vec, &args));
         }
     }
 }

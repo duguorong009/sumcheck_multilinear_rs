@@ -265,7 +265,10 @@ where
     }
 }
 
-impl<F> Mul<PMF<F>> for MVLinear<F> where F: PrimeField + Clone {
+impl<F> Mul<PMF<F>> for MVLinear<F>
+where
+    F: PrimeField + Clone,
+{
     type Output = PMF<F>;
     fn mul(self, rhs: PMF<F>) -> PMF<F> {
         let mut multiplicands = rhs.multiplicands.clone();
@@ -447,7 +450,8 @@ mod tests {
 
     #[test]
     fn test_mvlinear_eval() {
-        let p1: MVLinear<Fr> = MVLinear::new(4, vec![(0b0000, 15u64.into()), (0b0001, 1u64.into())]);
+        let p1: MVLinear<Fr> =
+            MVLinear::new(4, vec![(0b0000, 15u64.into()), (0b0001, 1u64.into())]);
         let at = vec![1u64.into(), 1u64.into(), 1u64.into(), 1u64.into()];
         let expected = (15u64 + 1u64).into();
         assert_eq!(p1.eval(&at), expected);
@@ -455,7 +459,8 @@ mod tests {
 
     #[test]
     fn test_mvlinear_eval_bin() {
-        let p1: MVLinear<Fr> = MVLinear::new(4, vec![(0b0000, 15u64.into()), (0b0001, 1u64.into())]);
+        let p1: MVLinear<Fr> =
+            MVLinear::new(4, vec![(0b0000, 15u64.into()), (0b0001, 1u64.into())]);
         let expected = (15u64 + 1u64).into();
         assert_eq!(p1.eval_bin(0b0001), expected);
         let expected = 15u64.into();
@@ -465,7 +470,8 @@ mod tests {
     #[test]
     fn test_mvlinear_collpase() {
         // right collpase: remove x3, x2, x1
-        let p1: MVLinear<Fr> = MVLinear::new(4, vec![(0b0000, 15u64.into()), (0b0001, 1u64.into())]);
+        let p1: MVLinear<Fr> =
+            MVLinear::new(4, vec![(0b0000, 15u64.into()), (0b0001, 1u64.into())]);
         let expected = MVLinear::new(1, vec![(0b0000, 15u64.into()), (0b0001, 1u64.into())]);
         assert_eq!(p1.collapse_right(3), expected);
 

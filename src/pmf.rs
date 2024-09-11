@@ -6,12 +6,18 @@ use crate::polynomial::MVLinear;
 
 /// Product of multilinear functions.
 #[derive(Debug, Clone)]
-pub struct PMF<F> where F: PrimeField + Clone {
+pub struct PMF<F>
+where
+    F: PrimeField + Clone,
+{
     pub(crate) num_variables: usize,
     pub(crate) multiplicands: Vec<MVLinear<F>>,
 }
 
-impl<F> PMF<F> where F: PrimeField + Clone {
+impl<F> PMF<F>
+where
+    F: PrimeField + Clone,
+{
     pub fn new(multiplicands: Vec<MVLinear<F>>) -> PMF<F> {
         if multiplicands.is_empty() {
             panic!("Multiplicands are empty.");
@@ -39,7 +45,10 @@ impl<F> PMF<F> where F: PrimeField + Clone {
     }
 }
 
-impl<F> Mul<MVLinear<F>> for PMF<F> where F: PrimeField + Clone {
+impl<F> Mul<MVLinear<F>> for PMF<F>
+where
+    F: PrimeField + Clone,
+{
     type Output = PMF<F>;
     fn mul(self, rhs: MVLinear<F>) -> PMF<F> {
         let mut multiplicands = self.multiplicands.clone();
@@ -48,7 +57,10 @@ impl<F> Mul<MVLinear<F>> for PMF<F> where F: PrimeField + Clone {
     }
 }
 
-impl<F> Display for PMF<F> where F: PrimeField + Clone {
+impl<F> Display for PMF<F>
+where
+    F: PrimeField + Clone,
+{
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         let mut s = String::new();
         s += "Product[";
@@ -101,10 +113,7 @@ mod tests {
 
     #[test]
     fn test_PMF_eval() {
-        let pmf: PMF<Fr> = PMF::new(vec![MVLinear::new(
-            3,
-            vec![(0b0, 1u64.into())],
-        )]);
+        let pmf: PMF<Fr> = PMF::new(vec![MVLinear::new(3, vec![(0b0, 1u64.into())])]);
         assert_eq!(pmf.eval(&[0u64.into()]), 1u64.into());
     }
 }
