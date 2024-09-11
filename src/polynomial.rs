@@ -265,9 +265,9 @@ where
     }
 }
 
-impl<F> Mul<PMF> for MVLinear<F> {
-    type Output = PMF;
-    fn mul(self, rhs: PMF) -> PMF {
+impl<F> Mul<PMF<F>> for MVLinear<F> where F: PrimeField + Clone {
+    type Output = PMF<F>;
+    fn mul(self, rhs: PMF<F>) -> PMF<F> {
         let mut multiplicands = rhs.multiplicands.clone();
         multiplicands.push(self);
         PMF::new(multiplicands)
