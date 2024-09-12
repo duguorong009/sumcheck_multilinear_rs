@@ -1,5 +1,7 @@
 use std::collections::HashMap;
 
+use halo2curves::ff::PrimeField;
+
 use crate::{
     gkr::GKR,
     ip_pmf_verifier::{InteractivePMFVerifier, TrueRandomGen},
@@ -17,22 +19,24 @@ pub enum GKRVerifierState {
 }
 
 #[derive(Debug)]
-pub struct GKRVerifier {
+pub struct GKRVerifier<F: PrimeField + Clone> {
     pub(crate) state: GKRVerifierState,
     rng: Option<TrueRandomGen>,
-    f1: HashMap<usize, u64>,
-    f2: Vec<u64>,
-    f3: Vec<u64>,
-    g: Vec<u64>,
-    p: u64,
+    f1: HashMap<usize, F>,
+    f2: Vec<F>,
+    f3: Vec<F>,
+    g: Vec<F>,
     l: usize,
-    pub(crate) asserted_sum: u64,
-    phase1_verifier: InteractivePMFVerifier,
-    phase2_verifier: Option<InteractivePMFVerifier>,
+    pub(crate) asserted_sum: F,
+    phase1_verifier: InteractivePMFVerifier<F>,
+    phase2_verifier: Option<InteractivePMFVerifier<F>>,
 }
 
-impl GKRVerifier {
-    pub fn new(gkr: GKR, g: Vec<u64>, asserted_sum: u64, rng: Option<TrueRandomGen>) -> Self {
+impl<F> GKRVerifier<F>
+where
+    F: PrimeField + Clone,
+{
+    pub fn new(gkr: GKR<F>, g: Vec<F>, asserted_sum: F, rng: Option<TrueRandomGen>) -> Self {
         Self {
             state: GKRVerifierState::PhaseOneListening,
             rng: rng.clone(),
@@ -40,14 +44,13 @@ impl GKRVerifier {
             f2: gkr.f2.clone(),
             f3: gkr.f3.clone(),
             g,
-            p: gkr.p,
             l: gkr.l,
             asserted_sum,
             phase1_verifier: InteractivePMFVerifier::new(
                 // DummyPMF::new(2, gkr.l, gkr.p),   // TODO: SHOULD enable this code after handling the inheritance case
                 PMF::new(vec![
-                    MVLinear::new(gkr.l, vec![], gkr.p),
-                    MVLinear::new(gkr.l, vec![], gkr.p),
+                    MVLinear::new(gkr.l, vec![]),
+                    MVLinear::new(gkr.l, vec![]),
                 ]),
                 asserted_sum,
                 None,
@@ -58,7 +61,7 @@ impl GKRVerifier {
         }
     }
 
-    pub fn talk_phase1(&mut self, msgs: &[u64]) -> (bool, u64) {
+    pub fn talk_phase1(&mut self, msgs: &[F]) -> (bool, F) {
         if self.state != GKRVerifierState::PhaseOneListening {
             panic!("Verifier is not in phase 1.");
         }
@@ -67,10 +70,7 @@ impl GKRVerifier {
         if self.phase1_verifier.convinced {
             let l = self.l;
             self.phase2_verifier = Some(InteractivePMFVerifier::new(
-                PMF::new(vec![
-                    MVLinear::new(l, vec![], self.p),
-                    MVLinear::new(l, vec![], self.p),
-                ]),
+                PMF::new(vec![MVLinear::new(l, vec![]), MVLinear::new(l, vec![])]),
                 self.phase1_verifier.subclaim().1,
                 None,
                 Some(true),
@@ -88,7 +88,7 @@ impl GKRVerifier {
         (true, r)
     }
 
-    pub fn talk_phase2(&mut self, msgs: &[u64]) -> (bool, u64) {
+    pub fn talk_phase2(&mut self, msgs: &[F]) -> (bool, F) {
         if self.state != GKRVerifierState::PhaseTwoListening {
             panic!("Verifier is not in phase 2.");
         }
@@ -121,18 +121,18 @@ impl GKRVerifier {
         let v = self.phase2_verifier.as_mut().unwrap().subclaim().0;
 
         // verify phase 2 verifier's claim
-        let self_f1: Vec<(usize, u64)> = self.f1.clone().into_iter().collect();
+        let self_f1: Vec<(usize, F)> = self.f1.clone().into_iter().collect();
         let mut args = Vec::with_capacity(self.g.len() + u.len() + v.len());
         args.extend_from_slice(&self.g);
         args.extend_from_slice(&u);
         args.extend_from_slice(&v);
-        let m1 = evaluate_sparse(&self_f1, &args, self.p);
+        let m1 = evaluate_sparse(&self_f1, &args);
 
-        let m2 = evaluate(&self.f3, &v, self.p) * evaluate(&self.f2, &u, self.p) % self.p;
+        let m2 = evaluate(&self.f3, &v) * evaluate(&self.f2, &u);
 
-        let expected = m1 * m2 % self.p;
+        let expected = m1 * m2;
 
-        if (self.phase2_verifier.as_mut().unwrap().subclaim().1 - expected) % self.p != 0 {
+        if (self.phase2_verifier.as_mut().unwrap().subclaim().1 - expected) != F::ZERO {
             self.state = GKRVerifierState::REJECT;
             return false;
         }
@@ -141,7 +141,7 @@ impl GKRVerifier {
         true
     }
 
-    fn get_randomness_u(&self) -> Vec<u64> {
+    fn get_randomness_u(&self) -> Vec<F> {
         if self.state == GKRVerifierState::PhaseOneListening
             || self.state == GKRVerifierState::REJECT
         {
@@ -150,7 +150,7 @@ impl GKRVerifier {
         self.phase1_verifier.points.clone()
     }
 
-    pub fn get_randomness_v(&self) -> Vec<u64> {
+    pub fn get_randomness_v(&self) -> Vec<F> {
         if self.state != GKRVerifierState::ACCEPT {
             panic!("Not in correct phase.");
         }
