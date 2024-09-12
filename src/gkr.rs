@@ -16,7 +16,10 @@ pub struct GKR<F: PrimeField + Clone> {
     pub(crate) l: usize,
 }
 
-impl<F> GKR<F> where F: PrimeField + Clone {
+impl<F> GKR<F>
+where
+    F: PrimeField + Clone,
+{
     pub fn new(f1: HashMap<usize, F>, f2: Vec<F>, f3: Vec<F>, l: usize) -> Self {
         assert!(f2.len() == 1 << l); // f2(x) should have size 2^L
         assert!(f3.len() == 1 << l); // f3(y) should have size 2^L
