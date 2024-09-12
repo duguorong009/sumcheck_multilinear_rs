@@ -5,7 +5,10 @@ use crate::pmf::PMF;
 
 pub const MAX_ALLOWED_SOUNDNESS_ERROR: f64 = 2e-64;
 
-trait RandomGen<F>  where F: PrimeField + Clone {
+trait RandomGen<F>
+where
+    F: PrimeField + Clone,
+{
     fn get_random_element(&mut self) -> F {
         unimplemented!("get_random_element")
     }
@@ -22,7 +25,10 @@ impl TrueRandomGen {
     }
 }
 
-impl<F> RandomGen<F> for TrueRandomGen where F: PrimeField + Clone {
+impl<F> RandomGen<F> for TrueRandomGen
+where
+    F: PrimeField + Clone,
+{
     fn get_random_element(&mut self) -> F {
         F::random(&mut self.rng)
     }
@@ -30,7 +36,10 @@ impl<F> RandomGen<F> for TrueRandomGen where F: PrimeField + Clone {
 
 /// An interactive verifier that verifies the sum of the polynomial which is the product of multilinear functions
 #[derive(Debug)]
-pub struct InteractivePMFVerifier<F> where F: PrimeField + Clone {
+pub struct InteractivePMFVerifier<F>
+where
+    F: PrimeField + Clone,
+{
     checksum_only: bool,
     // p: u64,
     poly: PMF<F>,
@@ -43,7 +52,10 @@ pub struct InteractivePMFVerifier<F> where F: PrimeField + Clone {
     expect: F,
 }
 
-impl<F> InteractivePMFVerifier<F> where F: PrimeField + Clone {
+impl<F> InteractivePMFVerifier<F>
+where
+    F: PrimeField + Clone,
+{
     pub fn new(
         poly: PMF<F>,
         asserted_sum: F,
@@ -235,7 +247,10 @@ fn interpolate<F: PrimeField + Clone>(points: &[F], r: F) -> F {
         let mut term = points[i];
         for j in 0..points.len() {
             if j != i {
-                term *= (r - F::from_u128(j as u128)) * (F::from_u128(i as u128) - F::from_u128(j as u128)).invert().unwrap();
+                term *= (r - F::from_u128(j as u128))
+                    * (F::from_u128(i as u128) - F::from_u128(j as u128))
+                        .invert()
+                        .unwrap();
             }
         }
         result += term;
