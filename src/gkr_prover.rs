@@ -16,23 +16,26 @@ where
     F: PrimeField + Clone,
 {
     let bits = to_bits(b.to_repr().as_ref());
-	let sliced_bits = bits[..num_variables].to_vec();
-	let vec: Vec<F> = sliced_bits.iter().map(|&x| F::from(u64::from(x))).collect();
-	vec.try_into().unwrap()
+    let sliced_bits = bits[..num_variables].to_vec();
+    let vec: Vec<F> = sliced_bits.iter().map(|&x| F::from(u64::from(x))).collect();
+    vec.try_into().unwrap()
 }
 
 /// Converts given bytes to the bits.
 pub fn to_bits(num: &[u8]) -> Vec<bool> {
-	let len = num.len() * 8;
-	let mut bits = Vec::new();
-	for i in 0..len {
-		let bit = num[i / 8] & (1 << (i % 8)) != 0;
-		bits.push(bit);
-	}
-	bits
+    let len = num.len() * 8;
+    let mut bits = Vec::new();
+    for i in 0..len {
+        let bit = num[i / 8] & (1 << (i % 8)) != 0;
+        bits.push(bit);
+    }
+    bits
 }
 
-pub fn precompute<F>(g: Vec<F>) -> Vec<F> where F: PrimeField + Clone {
+pub fn precompute<F>(g: Vec<F>) -> Vec<F>
+where
+    F: PrimeField + Clone,
+{
     let l = g.len();
     let mut G: Vec<F> = vec![F::ZERO; 1 << l];
     G[0] = F::ONE - g[0];
@@ -72,7 +75,10 @@ pub fn initialize_phase_one<F>(
     l: usize,
     a_f3: Vec<F>,
     g: Vec<F>,
-) -> (Vec<F>, Vec<F>) where F: PrimeField + Clone {
+) -> (Vec<F>, Vec<F>)
+where
+    F: PrimeField + Clone,
+{
     assert!(a_f3.len() == 1 << l);
     assert!(g.len() == l);
 
@@ -88,7 +94,10 @@ pub fn initialize_phase_one<F>(
 }
 
 /// calculate the sum of the GKR.
-pub fn sum_of_gkr<F>(a_hg: &[F], f2: &[F]) -> F where F: PrimeField + Clone {
+pub fn sum_of_gkr<F>(a_hg: &[F], f2: &[F]) -> F
+where
+    F: PrimeField + Clone,
+{
     assert!(a_hg.len() == f2.len());
     let mut s = F::ZERO;
     for i in 0..a_hg.len() {
@@ -104,7 +113,10 @@ pub fn sum_of_gkr<F>(a_hg: &[F], f2: &[F]) -> F where F: PrimeField + Clone {
 /// `u`: randomness of previous phase sum check protocol. It has size l (#variables in f2, f3).
 /// `p`: field size
 /// return: Bookkeeping table of f1(g, u, y) over y. It has size 2 ** l.
-pub fn initialize_phase_two<F>(f1: HashMap<usize, F>, g: &[F], u: &[F]) -> Vec<F> where F: PrimeField + Clone {
+pub fn initialize_phase_two<F>(f1: HashMap<usize, F>, g: &[F], u: &[F]) -> Vec<F>
+where
+    F: PrimeField + Clone,
+{
     let l = u.len();
     let u = precompute(g.to_vec());
     assert!(u.len() == g.len());
@@ -140,8 +152,8 @@ fn talk_process<F, Talker>(
                         _ => unreachable!(),
                     };
                     product = product
-                        * (((a[b << 1] * ((F::ONE - F::from_u128(t as u128))))
-                            + (a[(b << 1) + 1] * F::from_u128(t as u128))));
+                        * ((a[b << 1] * (F::ONE - F::from_u128(t as u128)))
+                            + (a[(b << 1) + 1] * F::from_u128(t as u128)));
                 }
                 product_sum[t as usize] = product_sum[t as usize] + product;
             }
@@ -182,7 +194,10 @@ fn talk_to_verifier_phase_one<F>(
     gkr: GKR<F>,
     verifier: &mut GKRVerifier<F>,
     msg_recorder: &mut Option<Vec<Vec<F>>>,
-) -> (Vec<F>, F) where F: PrimeField + Clone {
+) -> (Vec<F>, F)
+where
+    F: PrimeField + Clone,
+{
     // sanity check
     let l = gkr.l;
     assert!(
@@ -208,7 +223,9 @@ fn talk_to_verifier_phase_two<F>(
     f2u: F,
     verifier: &mut GKRVerifier<F>,
     msg_recorder: &mut Option<Vec<Vec<F>>>,
-) where F: PrimeField + Clone {
+) where
+    F: PrimeField + Clone,
+{
     let l = gkr.l;
     let a_f3_f2u: Vec<F> = gkr.f3.clone().into_iter().map(|x| x * f2u).collect();
 
@@ -219,12 +236,7 @@ fn talk_to_verifier_phase_two<F>(
     assert!(a_f1.len() == 1 << l, "Mismatch A_f1 size and L");
 
     let r#as: (Vec<F>, Vec<F>) = (a_f1.to_vec(), a_f3_f2u.clone());
-    talk_process(
-        r#as,
-        l,
-        &mut |arg| verifier.talk_phase2(arg),
-        msg_recorder,
-    );
+    talk_process(r#as, l, &mut |arg| verifier.talk_phase2(arg), msg_recorder);
 }
 
 #[derive(Debug)]
@@ -232,7 +244,10 @@ pub struct GKRProver<F: PrimeField + Clone> {
     gkr: GKR<F>,
 }
 
-impl<F> GKRProver<F> where F: PrimeField + Clone {
+impl<F> GKRProver<F>
+where
+    F: PrimeField + Clone,
+{
     pub fn new(gkr: GKR<F>) -> Self {
         Self { gkr }
     }
@@ -291,7 +306,10 @@ mod tests {
 
     use super::*;
 
-    fn generate_random_f1<F>(l: usize) -> HashMap<usize, F> where F: PrimeField + Clone {
+    fn generate_random_f1<F>(l: usize) -> HashMap<usize, F>
+    where
+        F: PrimeField + Clone,
+    {
         let mut rng = rand::thread_rng();
         let n = ((1 << (3 * l)) as f64).sqrt() as usize;
         let mut ans = HashMap::new();
@@ -303,7 +321,10 @@ mod tests {
         ans
     }
 
-    fn random_gkr<F>(l: usize) -> GKR<F> where F: PrimeField + Clone {
+    fn random_gkr<F>(l: usize) -> GKR<F>
+    where
+        F: PrimeField + Clone,
+    {
         let mut rng = rand::thread_rng();
         let f1 = generate_random_f1(l);
         let f2 = (0..(1 << l)).map(|_| F::random(OsRng)).collect();
@@ -313,7 +334,10 @@ mod tests {
 
     /// :return: A bookkeeping table where the index is the binary form of argument of polynomial and value is the
     /// evaluated value; the sum
-    fn calculate_bookkeeping_table<F>(poly: MVLinear<F>) -> (Vec<F>, F) where F: PrimeField + Clone {
+    fn calculate_bookkeeping_table<F>(poly: MVLinear<F>) -> (Vec<F>, F)
+    where
+        F: PrimeField + Clone,
+    {
         let mut a: Vec<F> = vec![F::ZERO; 1 << poly.num_variables];
         let mut s = F::ZERO;
         for p in 0..(1 << poly.num_variables) {
@@ -361,7 +385,7 @@ mod tests {
         }
         let (a_hg_actual, G) = initialize_phase_one(d_f1.clone(), l, a_f3, g);
         for i in 0..(1 << l) {
-            assert!(a_hg_expected[i] == a_hg_actual[i] );
+            assert!(a_hg_expected[i] == a_hg_actual[i]);
         }
         println!("PASS: initialize_PhaseOne");
 

@@ -355,9 +355,7 @@ pub fn random_prime(bit_length: usize) -> u64 {
 }
 
 // Function to create a random MVLinear
-pub fn random_mvlinear<F>(
-    num_variables: usize,
-) -> MVLinear<F>
+pub fn random_mvlinear<F>(num_variables: usize) -> MVLinear<F>
 where
     F: PrimeField + Clone,
 {
