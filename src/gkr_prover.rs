@@ -11,15 +11,25 @@ use crate::{
 ///
 /// `b`: The binary form in little endian encoding. For example, 0b1011 means g(x0=1, x1=1, x2=0, x3=1)
 /// `num_variables`: number of variables
-pub fn binary_to_list<F>(mut b: F, num_variables: usize) -> Vec<F> where F: PrimeField + Clone {
-    let mut lst = vec![F::ZERO; num_variables];
-    let mut i = 0;
-    while b != F::ZERO {
-        lst[i] = b & 1;
-        b >>= 1;
-        i += 1;
-    }
-    lst
+pub fn binary_to_list<F>(b: F, num_variables: usize) -> Vec<F>
+where
+    F: PrimeField + Clone,
+{
+    let bits = to_bits(b.to_repr().as_ref());
+	let sliced_bits = bits[..num_variables].to_vec();
+	let vec: Vec<F> = sliced_bits.iter().map(|&x| F::from(u64::from(x))).collect();
+	vec.try_into().unwrap()
+}
+
+/// Converts given bytes to the bits.
+pub fn to_bits(num: &[u8]) -> Vec<bool> {
+	let len = num.len() * 8;
+	let mut bits = Vec::new();
+	for i in 0..len {
+		let bit = num[i / 8] & (1 << (i % 8)) != 0;
+		bits.push(bit);
+	}
+	bits
 }
 
 pub fn precompute<F>(g: Vec<F>) -> Vec<F> where F: PrimeField + Clone {
@@ -306,8 +316,9 @@ mod tests {
     fn calculate_bookkeeping_table<F>(poly: MVLinear<F>) -> (Vec<F>, F) where F: PrimeField + Clone {
         let mut a: Vec<F> = vec![F::ZERO; 1 << poly.num_variables];
         let mut s = F::ZERO;
-        for p in 0..((1 << poly.num_variables) as u64) {
-            a[p as usize] = poly.eval(&binary_to_list(p, poly.num_variables));
+        for p in 0..(1 << poly.num_variables) {
+            let p_f = F::from_u128(p as u128);
+            a[p as usize] = poly.eval(&binary_to_list(p_f, poly.num_variables));
             s = s + a[p as usize];
         }
         (a, s)
