@@ -357,18 +357,11 @@ pub fn random_prime(bit_length: usize) -> u64 {
 // Function to create a random MVLinear
 pub fn random_mvlinear<F>(
     num_variables: usize,
-    prime: Option<u64>,
-    prime_bit_length: Option<usize>,
 ) -> MVLinear<F>
 where
     F: PrimeField + Clone,
 {
-    let prime_bit_length = prime_bit_length.unwrap_or(64);
     let num_terms = 2_usize.pow(num_variables as u32);
-    let p = match prime {
-        Some(p) => p,
-        None => random_prime(prime_bit_length), // Ensure the prime fits in usize
-    };
 
     let mv_linear_constructor = make_mvlinear_constructor(num_variables);
     let mut terms = HashMap::new();
