@@ -418,7 +418,10 @@ mod tests {
         let p1: MVLinear<Fr> = MVLinear::new(4, vec![(0b0000, 15u64.into())]);
         let p2: MVLinear<Fr> = MVLinear::new(4, vec![(0b0001, 1u64.into())]);
         let p3: MVLinear<Fr> = p1 - p2;
-        let expected = MVLinear::new(4, vec![(0b0000, 15u64.into()), (0b0001, 36u64.into())]);
+        let expected = MVLinear::new(
+            4,
+            vec![(0b0000, 15u64.into()), (0b0001, Fr::zero() - Fr::one())],
+        );
         assert_eq!(p3, expected);
     }
 
@@ -426,7 +429,7 @@ mod tests {
     fn test_mvlinear_neg() {
         let p1: MVLinear<Fr> = MVLinear::new(4, vec![(0b0000, 15u64.into())]);
         let p2: MVLinear<Fr> = -p1;
-        let expected = MVLinear::new(4, vec![(0b0000, 22u64.into())]);
+        let expected = MVLinear::new(4, vec![(0b0000, Fr::zero() - Fr::from_u128(15))]);
         assert_eq!(p2, expected);
     }
 
