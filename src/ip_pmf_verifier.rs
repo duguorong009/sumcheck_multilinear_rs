@@ -1,5 +1,5 @@
 use halo2curves::ff::PrimeField;
-use rand::{rngs::OsRng, Rng, SeedableRng};
+use rand::{rngs::OsRng, Rng};
 
 use crate::pmf::PMF;
 
@@ -95,7 +95,7 @@ where
         Self {
             checksum_only: checksum_only.unwrap_or(false),
             poly,
-            asserted_sum: asserted_sum,
+            asserted_sum,
             rng: rng.unwrap_or_else(|| TrueRandomGen::new(seed)),
             active: true,
             convinced: false,
@@ -152,7 +152,7 @@ where
         self.points[self.round] = r;
 
         // if not final step, end here
-        if !(self.round + 1 == self.poly.num_variables) {
+        if self.round + 1 != self.poly.num_variables {
             self.round += 1;
             return (true, r);
         }

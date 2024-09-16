@@ -18,7 +18,7 @@ where
     let bits = to_bits(b.to_repr().as_ref());
     let sliced_bits = bits[..num_variables].to_vec();
     let vec: Vec<F> = sliced_bits.iter().map(|&x| F::from(u64::from(x))).collect();
-    vec.try_into().unwrap()
+    vec
 }
 
 /// Converts given bytes to the bits.
@@ -47,7 +47,7 @@ where
             G[b + (1 << i)] = old_G[b] * g[i];
         }
     }
-    G.into_iter().map(|x| x.try_into().unwrap()).collect()
+    G
 }
 
 /// Split the argument into three parts.
@@ -88,7 +88,7 @@ where
     // rely on sparsity
     for (arg, ev) in f1.into_iter() {
         let (z, x, y) = _three_split(arg, l);
-        a_hg[x] = a_hg[x] + G[z] * ev * a_f3[y];
+        a_hg[x] += G[z] * ev * a_f3[y];
     }
     (a_hg, G)
 }
@@ -123,7 +123,7 @@ where
     let mut a_f1 = vec![F::ZERO; 1 << l];
     for (arg, ev) in f1.into_iter() {
         let (z, x, y) = _three_split(arg, l);
-        a_f1[y] = (a_f1[y] + g[z] * u[x] * ev);
+        a_f1[y] += g[z] * u[x] * ev;
     }
     a_f1
 }
@@ -141,7 +141,7 @@ fn talk_process<F, Talker>(
 {
     let num_multiplicands: usize = 2;
     for i in 1..=l {
-        let mut product_sum: Vec<F> = vec![F::ZERO; num_multiplicands as usize + 1];
+        let mut product_sum: Vec<F> = vec![F::ZERO; num_multiplicands + 1];
         for b in 0..(1 << (l - i)) {
             for t in 0..=num_multiplicands {
                 let mut product = F::ONE;
@@ -151,11 +151,10 @@ fn talk_process<F, Talker>(
                         1 => &as_vec.1.clone(),
                         _ => unreachable!(),
                     };
-                    product = product
-                        * ((a[b << 1] * (F::ONE - F::from_u128(t as u128)))
-                            + (a[(b << 1) + 1] * F::from_u128(t as u128)));
+                    product *= (a[b << 1] * (F::ONE - F::from_u128(t as u128)))
+                            + (a[(b << 1) + 1] * F::from_u128(t as u128));
                 }
-                product_sum[t as usize] = product_sum[t as usize] + product;
+                product_sum[t] += product;
             }
         }
 
@@ -169,12 +168,12 @@ fn talk_process<F, Talker>(
             for b in 0..(1 << (l - i)) {
                 match j {
                     0 => {
-                        as_vec.0[b as usize] = (as_vec.0[(b << 1) as usize] * (F::ONE - r)
-                            + as_vec.0[((b << 1) + 1) as usize] * r);
+                        as_vec.0[b as usize] = as_vec.0[(b << 1) as usize] * (F::ONE - r)
+                            + as_vec.0[((b << 1) + 1) as usize] * r;
                     }
                     1 => {
-                        as_vec.1[b as usize] = (as_vec.1[(b << 1) as usize] * (F::ONE - r)
-                            + as_vec.1[((b << 1) + 1) as usize] * r);
+                        as_vec.1[b as usize] = as_vec.1[(b << 1) as usize] * (F::ONE - r)
+                            + as_vec.1[((b << 1) + 1) as usize] * r;
                     }
                     _ => unreachable!(),
                 }
