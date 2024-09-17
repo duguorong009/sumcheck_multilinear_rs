@@ -113,17 +113,17 @@ where
 /// `u`: randomness of previous phase sum check protocol. It has size l (#variables in f2, f3).
 /// `p`: field size
 /// return: Bookkeeping table of f1(g, u, y) over y. It has size 2 ** l.
-pub fn initialize_phase_two<F>(f1: HashMap<usize, F>, g: &[F], u: &[F]) -> Vec<F>
+pub fn initialize_phase_two<F>(f1: &HashMap<usize, F>, g: &[F], u: &[F]) -> Vec<F>
 where
     F: PrimeField + Clone,
 {
     let l = u.len();
-    let u = precompute(g.to_vec());
-    assert!(u.len() == g.len());
+    let U = precompute(u.to_vec());
+    assert!(U.len() == g.len());
     let mut a_f1 = vec![F::ZERO; 1 << l];
     for (arg, ev) in f1.into_iter() {
-        let (z, x, y) = _three_split(arg, l);
-        a_f1[y] += g[z] * u[x] * ev;
+        let (z, x, y) = _three_split(*arg, l);
+        a_f1[y] += g[z] * U[x] * ev;
     }
     a_f1
 }
@@ -288,7 +288,7 @@ where
             "Verifier does not accept phase 1 proof"
         );
 
-        let a_f1 = initialize_phase_two(self.gkr.f1.clone(), g, &u);
+        let a_f1 = initialize_phase_two(&self.gkr.f1, g, &u);
         talk_to_verifier_phase_two(&a_f1, self.gkr.clone(), f2u, verifier, msg_recorder_phase_2);
     }
 }
@@ -324,7 +324,6 @@ mod tests {
     where
         F: PrimeField + Clone,
     {
-        let mut rng = rand::thread_rng();
         let f1 = generate_random_f1(l);
         let f2 = (0..(1 << l)).map(|_| F::random(OsRng)).collect();
         let f3 = (0..(1 << l)).map(|_| F::random(OsRng)).collect();
@@ -349,8 +348,6 @@ mod tests {
 
     #[test]
     fn test_initialize_phase_one_two() {
-        let mut rng = rand::thread_rng();
-
         let l = 5;
         println!(
             "Testing GKR Prover Bookkeeping table generator functions... Use L = {l}, p = ???"
@@ -399,7 +396,7 @@ mod tests {
             a_f1_expected[y] = f1_fix_gu.eval_bin(y);
         }
 
-        let a_f1_actual = initialize_phase_two(d_f1, &G, &u);
+        let a_f1_actual = initialize_phase_two(&d_f1, &G, &u);
         for i in 0..(1 << l) {
             assert!(a_f1_expected[i] == a_f1_actual[i]);
         }
@@ -433,7 +430,7 @@ mod tests {
         );
 
         println!("initialize_phase_one, sum_of_gkr, talk_to_verifier_phase_one looks good. ");
-        let A_f1 = initialize_phase_two(gkr.f1.clone(), &G, &u);
+        let A_f1 = initialize_phase_two(&gkr.f1, &G, &u);
         talk_to_verifier_phase_two(&A_f1, gkr.clone(), f2u, &mut v, &mut None);
         assert!(
             v.state == GKRVerifierState::ACCEPT,
