@@ -86,7 +86,7 @@ where
     let G = precompute(g);
 
     // rely on sparsity
-    for (arg, ev) in f1.into_iter() {
+    for (arg, ev) in f1.iter() {
         let (z, x, y) = _three_split(*arg, l);
         a_hg[x] += G[z] * ev * a_f3[y];
     }
@@ -121,7 +121,7 @@ where
     let U = precompute(u);
     assert!(U.len() == g.len());
     let mut a_f1 = vec![F::ZERO; 1 << l];
-    for (arg, ev) in f1.into_iter() {
+    for (arg, ev) in f1.iter() {
         let (z, x, y) = _three_split(*arg, l);
         a_f1[y] += g[z] * U[x] * ev;
     }
