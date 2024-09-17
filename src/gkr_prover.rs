@@ -32,7 +32,7 @@ pub fn to_bits(num: &[u8]) -> Vec<bool> {
     bits
 }
 
-pub fn precompute<F>(g: Vec<F>) -> Vec<F>
+pub fn precompute<F>(g: &[F]) -> Vec<F>
 where
     F: PrimeField + Clone,
 {
@@ -71,10 +71,10 @@ pub fn _three_split(arg: usize, l: usize) -> (usize, usize, usize) {
 /// `g`: fixed parameter g of f1
 /// return: Bookkeeping table of h_g = sum over y: f1(g, x, y)*f3(y). It has size 2 ** l. It also returns G, which is precompute(g, p), that is useful for phase two.
 pub fn initialize_phase_one<F>(
-    f1: HashMap<usize, F>,
+    f1: &HashMap<usize, F>,
     l: usize,
-    a_f3: Vec<F>,
-    g: Vec<F>,
+    a_f3: &[F],
+    g: &[F],
 ) -> (Vec<F>, Vec<F>)
 where
     F: PrimeField + Clone,
@@ -87,7 +87,7 @@ where
 
     // rely on sparsity
     for (arg, ev) in f1.into_iter() {
-        let (z, x, y) = _three_split(arg, l);
+        let (z, x, y) = _three_split(*arg, l);
         a_hg[x] += G[z] * ev * a_f3[y];
     }
     (a_hg, G)
@@ -118,7 +118,7 @@ where
     F: PrimeField + Clone,
 {
     let l = u.len();
-    let U = precompute(u.to_vec());
+    let U = precompute(u);
     assert!(U.len() == g.len());
     let mut a_f1 = vec![F::ZERO; 1 << l];
     for (arg, ev) in f1.into_iter() {
@@ -152,7 +152,7 @@ fn talk_process<F, Talker>(
                         _ => unreachable!(),
                     };
                     product *= (a[b << 1] * (F::ONE - F::from_u128(t as u128)))
-                            + (a[(b << 1) + 1] * F::from_u128(t as u128));
+                        + (a[(b << 1) + 1] * F::from_u128(t as u128));
                 }
                 product_sum[t] += product;
             }
@@ -255,12 +255,7 @@ where
     /// :return: Bookkeeping table h_g, G: precompute cache, sum
     pub fn init_and_get_sum(&self, g: &[F]) -> (Vec<F>, Vec<F>, F) {
         assert!(g.len() == self.gkr.l, "Size of g is incorrect");
-        let (a_hg, g) = initialize_phase_one(
-            self.gkr.f1.clone(),
-            self.gkr.l,
-            self.gkr.f3.clone(),
-            g.to_vec(),
-        );
+        let (a_hg, g) = initialize_phase_one(&self.gkr.f1, self.gkr.l, &self.gkr.f3, g);
         let s = sum_of_gkr(&a_hg, &self.gkr.f2);
         (a_hg, g, s)
     }
@@ -379,7 +374,7 @@ mod tests {
             let y = (i & (((1 << l) - 1) << l)) >> l;
             a_hg_expected[x] = (a_hg_expected[x] + f1_fix_g.eval_bin(i) * a_f3[y]);
         }
-        let (a_hg_actual, G) = initialize_phase_one(d_f1.clone(), l, a_f3, g);
+        let (a_hg_actual, G) = initialize_phase_one(&d_f1, l, &a_f3, &g);
         for i in 0..(1 << l) {
             assert!(a_hg_expected[i] == a_hg_actual[i]);
         }
@@ -410,7 +405,7 @@ mod tests {
         let gkr = random_gkr(L);
         let g: Vec<Fr> = (0..L).map(|_| Fr::random(OsRng)).collect();
 
-        let (A_hg, G) = initialize_phase_one(gkr.f1.clone(), L, gkr.f3.clone(), g.clone());
+        let (A_hg, G) = initialize_phase_one(&gkr.f1, L, &gkr.f3, &g);
         let s = sum_of_gkr(&A_hg, &gkr.f2);
         let mut v = GKRVerifier::new(gkr.clone(), g, s, None);
         assert!(
