@@ -213,7 +213,7 @@ where
         msg_recorder,
     );
 
-    (verifier.get_randomness_v(), r#as.1[0])
+    (verifier.get_randomness_u(), r#as.1[0])
 }
 
 fn talk_to_verifier_phase_two<F>(
