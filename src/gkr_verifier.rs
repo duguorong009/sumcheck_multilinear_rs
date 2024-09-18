@@ -141,7 +141,7 @@ where
         true
     }
 
-    fn get_randomness_u(&self) -> Vec<F> {
+    pub fn get_randomness_u(&self) -> Vec<F> {
         if self.state == GKRVerifierState::PhaseOneListening
             || self.state == GKRVerifierState::REJECT
         {
