@@ -209,14 +209,11 @@ mod tests {
 
     #[test]
     fn test_evaluate() {
-        let mut rng = OsRng;
-
         for _ in 0..1 {
-            let p = random_prime(32);
             let l = 8;
-            let arr: Vec<Fr> = (0..1 << l).map(|_| Fr::random(rng)).collect();
+            let arr: Vec<Fr> = (0..1 << l).map(|_| Fr::random(OsRng)).collect();
             let poly = extend(&arr);
-            let args: Vec<Fr> = (0..l).map(|_| Fr::random(rng)).collect();
+            let args: Vec<Fr> = (0..l).map(|_| Fr::random(OsRng)).collect();
             assert!(poly.eval(&args) == evaluate(&arr, &args));
         }
     }
