@@ -400,7 +400,7 @@ mod tests {
 
     #[test]
     fn test_completeness_sanity() {
-        println!("Test Completeness of GKR protocol (test individual functions");
+        println!("Test Completeness of GKR protocol (test individual functions)");
         let L = 7;
         let gkr = random_gkr(L);
         let g: Vec<Fr> = (0..L).map(|_| Fr::random(OsRng)).collect();
