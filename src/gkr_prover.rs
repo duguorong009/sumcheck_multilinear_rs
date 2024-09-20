@@ -131,7 +131,7 @@ where
 // type Talker = dyn Fn(&Vec<u64>) -> (bool, u64);
 
 fn talk_process<F, Talker>(
-    mut as_vec: (Vec<F>, Vec<F>),
+    as_vec: &mut (Vec<F>, Vec<F>),
     l: usize,
     talker: &mut Talker,
     msg_recorder: &mut Option<Vec<Vec<F>>>,
@@ -205,9 +205,9 @@ where
     );
     assert!(a_hg.len() == 1 << l, "Mismatch A_hg size and L");
 
-    let r#as: (Vec<F>, Vec<F>) = (a_hg.to_vec(), gkr.f2.clone());
+    let mut r#as: (Vec<F>, Vec<F>) = (a_hg.to_vec(), gkr.f2.clone());
     talk_process(
-        r#as.clone(),
+        &mut r#as,
         l,
         &mut |arg| verifier.talk_phase1(arg),
         msg_recorder,
@@ -234,8 +234,8 @@ fn talk_to_verifier_phase_two<F>(
     );
     assert!(a_f1.len() == 1 << l, "Mismatch A_f1 size and L");
 
-    let r#as: (Vec<F>, Vec<F>) = (a_f1.to_vec(), a_f3_f2u.clone());
-    talk_process(r#as, l, &mut |arg| verifier.talk_phase2(arg), msg_recorder);
+    let mut r#as: (Vec<F>, Vec<F>) = (a_f1.to_vec(), a_f3_f2u.clone());
+    talk_process(&mut r#as, l, &mut |arg| verifier.talk_phase2(arg), msg_recorder);
 }
 
 #[derive(Debug)]
