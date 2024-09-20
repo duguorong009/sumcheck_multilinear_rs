@@ -235,7 +235,12 @@ fn talk_to_verifier_phase_two<F>(
     assert!(a_f1.len() == 1 << l, "Mismatch A_f1 size and L");
 
     let mut r#as: (Vec<F>, Vec<F>) = (a_f1.to_vec(), a_f3_f2u.clone());
-    talk_process(&mut r#as, l, &mut |arg| verifier.talk_phase2(arg), msg_recorder);
+    talk_process(
+        &mut r#as,
+        l,
+        &mut |arg| verifier.talk_phase2(arg),
+        msg_recorder,
+    );
 }
 
 #[derive(Debug)]
