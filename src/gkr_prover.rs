@@ -305,7 +305,7 @@ mod tests {
         F: PrimeField + Clone,
     {
         let mut rng = rand::thread_rng();
-        let n = ((1 << (3 * l)) as f64).sqrt() as usize;
+        let n = ((1usize << (3 * l)) as f64).sqrt() as usize;
         let mut ans = HashMap::new();
         for _ in 0..n {
             let term = rng.gen_range(0..(1 << 3 * l));
