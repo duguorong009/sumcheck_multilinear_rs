@@ -92,7 +92,7 @@ where
     }
 
     /// For all multiplicands of the PMF, calculate its bookkeeping table. The function all calculates the sum.
-    /// 
+    ///
     ///  :return: All bookkeeping table. The sum of the PMF.
     pub fn calculate_all_bookkeeping_tables(&self) -> (Vec<Vec<F>>, F) {
         let mut S: Vec<F> = vec![F::ONE; 2usize.pow(self.poly.num_variables as u32)];
