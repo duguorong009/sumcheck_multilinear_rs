@@ -72,7 +72,7 @@ where
     ///  :param index: the index of the MVLinear in PMF
     ///  :return: A bookkeeping table where the index is the binary form of argument of polynomial and value is the
     ///    evaluated value
-    pub fn calculate_single_table(&mut self, index: usize) -> Vec<F> {
+    pub fn calculate_single_table(&self, index: usize) -> Vec<F> {
         if index >= self.poly.num_multiplicands() {
             panic!(
                 "PMF has onlyl {} multiplicands. index = {}",
@@ -91,8 +91,20 @@ where
         A
     }
 
-    pub fn calculate_all_bookkeeping_tables(&mut self) {
-        todo!()
+    /// For all multiplicands of the PMF, calculate its bookkeeping table. The function all calculates the sum.
+    /// 
+    ///  :return: All bookkeeping table. The sum of the PMF.
+    pub fn calculate_all_bookkeeping_tables(&self) -> (Vec<Vec<F>>, F) {
+        let mut S: Vec<F> = vec![F::ONE; 2usize.pow(self.poly.num_variables as u32)];
+        let mut As: Vec<Vec<F>> = vec![];
+        for i in 0..self.poly.num_multiplicands() {
+            let A = self.calculate_single_table(i);
+            for j in 0..2usize.pow(self.poly.num_variables as u32) {
+                S[j] *= A[j];
+            }
+            As.push(A);
+        }
+        (As, S.iter().sum())
     }
 }
 
