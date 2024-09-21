@@ -1,6 +1,6 @@
 use halo2curves::ff::PrimeField;
 
-use crate::{ip_pmf_verifier::InteractivePMFVerifier, pmf::PMF};
+use crate::{gkr_prover::binary_to_list, ip_pmf_verifier::InteractivePMFVerifier, pmf::PMF};
 
 /// A linear honest prover of sum-check protocol for product of multilinear polynomials using dynamic programming.
 #[derive(Debug)]
@@ -39,7 +39,8 @@ where
                     let mut product = F::ONE;
                     for j in 0..self.poly.num_multiplicands() {
                         let A = As[j];
-                        product *= (A[b << 1] * (F::ONE - F::from_u128(t as u128))) + (A[(b << 1) + 1] * F::from_u128(t as u128));
+                        product *= (A[b << 1] * (F::ONE - F::from_u128(t as u128)))
+                            + (A[(b << 1) + 1] * F::from_u128(t as u128));
                     }
                     products_sum[t] += product;
                 }
@@ -66,8 +67,28 @@ where
         }
     }
 
-    pub fn calculate_single_table(&mut self) {
-        todo!()
+    /// Calculate the bookkeeping table of a single MVLinear in the PMF.
+    ///
+    ///  :param index: the index of the MVLinear in PMF
+    ///  :return: A bookkeeping table where the index is the binary form of argument of polynomial and value is the
+    ///    evaluated value
+    pub fn calculate_single_table(&mut self, index: usize) -> Vec<F> {
+        if index >= self.poly.num_multiplicands() {
+            panic!(
+                "PMF has onlyl {} multiplicands. index = {}",
+                self.poly.num_multiplicands(),
+                index
+            );
+        }
+
+        let mut A: Vec<F> = vec![F::ZERO; 2usize.pow(self.poly.num_variables as u32)];
+        for p in 0..2usize.pow(self.poly.num_variables as u32) {
+            A[p] = self.poly.multiplicands[index].eval(&binary_to_list(
+                F::from_u128(p as u128),
+                self.poly.num_variables,
+            ));
+        }
+        A
     }
 
     pub fn calculate_all_bookkeeping_tables(&mut self) {
