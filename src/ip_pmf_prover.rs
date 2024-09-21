@@ -25,7 +25,7 @@ where
     ///  :param gen: in FS mode, attemptProve will provide source of randomness for pseudorandom generator
     ///  :return: the prover message
     pub fn attempt_prove(
-        &mut self,
+        &self,
         As: Vec<Vec<F>>,
         verifier: InteractivePMFVerifier<F>,
         // gen: Option<PseudoRandomGen>,
@@ -110,10 +110,20 @@ where
 
 #[cfg(test)]
 mod tests {
+    use halo2curves::bn256::Fr;
+
+    use crate::polynomial::random_mvlinear;
+
     use super::*;
 
     #[test]
     fn test_completeness() {
-        todo!()
+        for _ in 0..100 {
+            let p = PMF::<Fr>::new(vec![random_mvlinear(7); 5]);
+            let pv = InteractivePMFProver::new(p.clone());
+            let (As, s) = pv.calculate_all_bookkeeping_tables();
+            let v = InteractivePMFVerifier::new(p, s, None, None, None);
+            let _ = pv.attempt_prove(As, v);
+        }
     }
 }
