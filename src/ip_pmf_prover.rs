@@ -1,6 +1,9 @@
 use halo2curves::ff::PrimeField;
 
-use crate::{fs_pmf_verifier::PseudoRandomGen, gkr_prover::binary_to_list, ip_pmf_verifier::InteractivePMFVerifier, pmf::PMF};
+use crate::{
+    fs_pmf_verifier::PseudoRandomGen, gkr_prover::binary_to_list,
+    ip_pmf_verifier::InteractivePMFVerifier, pmf::PMF,
+};
 
 /// A linear honest prover of sum-check protocol for product of multilinear polynomials using dynamic programming.
 #[derive(Debug)]
