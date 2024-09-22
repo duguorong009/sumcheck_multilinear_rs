@@ -28,7 +28,7 @@ where
         &self,
         mut As: Vec<Vec<F>>,
         mut verifier: InteractivePMFVerifier<F>,
-        gen: Option<PseudoRandomGen<F>>,
+        gen: &mut Option<PseudoRandomGen<F>>,
     ) -> Vec<Vec<F>> {
         let l = self.poly.num_variables;
         let mut msgs: Vec<Vec<F>> = vec![];
@@ -45,7 +45,7 @@ where
                     products_sum[t] += product;
                 }
             }
-            if let Some(mut gen) = gen {
+            if let Some(gen) = gen {
                 gen.message.push(products_sum.clone());
             } else {
                 msgs.push(products_sum.clone());
@@ -123,7 +123,7 @@ mod tests {
             let pv = InteractivePMFProver::new(p.clone());
             let (As, s) = pv.calculate_all_bookkeeping_tables();
             let v = InteractivePMFVerifier::new(p, s, None, None, None);
-            let _ = pv.attempt_prove(As, v, None);
+            let _ = pv.attempt_prove(As, v, &mut None);
         }
     }
 }
