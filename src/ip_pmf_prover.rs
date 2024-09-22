@@ -1,6 +1,6 @@
 use halo2curves::ff::PrimeField;
 
-use crate::{gkr_prover::binary_to_list, ip_pmf_verifier::InteractivePMFVerifier, pmf::PMF};
+use crate::{fs_pmf_verifier::PseudoRandomGen, gkr_prover::binary_to_list, ip_pmf_verifier::InteractivePMFVerifier, pmf::PMF};
 
 /// A linear honest prover of sum-check protocol for product of multilinear polynomials using dynamic programming.
 #[derive(Debug)]
@@ -26,9 +26,9 @@ where
     ///  :return: the prover message
     pub fn attempt_prove(
         &self,
-        As: Vec<Vec<F>>,
-        verifier: InteractivePMFVerifier<F>,
-        // gen: Option<PseudoRandomGen>,
+        mut As: Vec<Vec<F>>,
+        mut verifier: InteractivePMFVerifier<F>,
+        gen: Option<PseudoRandomGen<F>>,
     ) -> Vec<Vec<F>> {
         let l = self.poly.num_variables;
         let mut msgs: Vec<Vec<F>> = vec![];
@@ -38,17 +38,17 @@ where
                 for t in 0..self.poly.num_multiplicands() + 1 {
                     let mut product = F::ONE;
                     for j in 0..self.poly.num_multiplicands() {
-                        let A = As[j];
+                        let A = As[j].clone();
                         product *= (A[b << 1] * (F::ONE - F::from_u128(t as u128)))
                             + (A[(b << 1) + 1] * F::from_u128(t as u128));
                     }
                     products_sum[t] += product;
                 }
             }
-            if let Some(gen) = gen {
+            if let Some(mut gen) = gen {
                 gen.message.push(products_sum.clone());
             } else {
-                msgs.push(products_sum);
+                msgs.push(products_sum.clone());
             }
             let (result, r) = verifier.talk(&products_sum);
 
@@ -61,7 +61,7 @@ where
             }
         }
         if let Some(gen) = gen {
-            gen.message
+            gen.message.clone()
         } else {
             msgs
         }
@@ -123,7 +123,7 @@ mod tests {
             let pv = InteractivePMFProver::new(p.clone());
             let (As, s) = pv.calculate_all_bookkeeping_tables();
             let v = InteractivePMFVerifier::new(p, s, None, None, None);
-            let _ = pv.attempt_prove(As, v);
+            let _ = pv.attempt_prove(As, v, None);
         }
     }
 }
