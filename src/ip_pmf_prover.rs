@@ -59,7 +59,7 @@ where
 
             for j in 0..self.poly.num_multiplicands() {
                 for b in 0..2usize.pow((l - i) as u32) {
-                    As[j][b] = As[j][b << 1] * (F::ONE - r) + As[(j << 1) + 1][b << 1] * r;
+                    As[j][b] = As[j][b << 1] * (F::ONE - r) + As[j][(b << 1) + 1] * r;
                 }
             }
         }
