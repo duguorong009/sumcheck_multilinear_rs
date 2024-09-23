@@ -12,8 +12,8 @@ where
 }
 
 impl<F> PseudoRandomGen<F> where F: PrimeField + Clone {
-    pub fn new(poly: PMF<F>, message: Vec<Vec<F>>) -> PseudoRandomGen<F> {
-        PseudoRandomGen { poly, message }
+    pub fn new(poly: PMF<F>) -> PseudoRandomGen<F> {
+        PseudoRandomGen { poly, message: vec![] }
     }
 
     pub fn get_random_element(&self) -> F {
