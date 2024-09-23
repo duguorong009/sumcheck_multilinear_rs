@@ -32,3 +32,14 @@ impl<F> Theorem<F> where F: PrimeField + Clone {
         Theorem { poly, asserted_sum }
     }
 }
+
+/// A data structure representing proof of a theorem.
+struct Proof<F> where F: PrimeField + Clone {
+    prover_message: Vec<Vec<F>>,
+}
+
+impl<F> Proof<F> where F: PrimeField + Clone {
+    pub fn new(prover_message: Vec<Vec<F>>) -> Proof<F> {
+        Proof { prover_message }
+    }
+}
