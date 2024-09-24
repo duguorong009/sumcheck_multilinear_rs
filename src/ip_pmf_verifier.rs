@@ -1,3 +1,5 @@
+use std::{cell::RefCell, rc::Rc};
+
 use halo2curves::ff::PrimeField;
 use rand::{rngs::OsRng, Rng};
 
@@ -5,7 +7,7 @@ use crate::pmf::PMF;
 
 pub const MAX_ALLOWED_SOUNDNESS_ERROR: f64 = 2e-64;
 
-trait RandomGen<F>
+pub trait RandomGen<F>
 where
     F: PrimeField + Clone,
 {
@@ -35,7 +37,6 @@ where
 }
 
 /// An interactive verifier that verifies the sum of the polynomial which is the product of multilinear functions
-#[derive(Debug)]
 pub struct InteractivePMFVerifier<F>
 where
     F: PrimeField + Clone,
@@ -44,7 +45,7 @@ where
     // p: u64,
     poly: PMF<F>,
     asserted_sum: F,
-    rng: TrueRandomGen,
+    rng: Rc<RefCell<dyn RandomGen<F>>>,
     pub(crate) active: bool,
     pub(crate) convinced: bool,
     pub(crate) points: Vec<F>,
@@ -61,7 +62,7 @@ where
         asserted_sum: F,
         max_allowed_soundness_err: Option<f64>,
         checksum_only: Option<bool>,
-        rng: Option<TrueRandomGen>,
+        rng: Option<Rc<RefCell<dyn RandomGen<F>>>>,
     ) -> Self {
         let poly_num_variables = poly.num_variables;
         let seed = rand::thread_rng().gen_range(0..0xFFFFFFFF);
@@ -96,7 +97,7 @@ where
             checksum_only: checksum_only.unwrap_or(false),
             poly,
             asserted_sum,
-            rng: rng.unwrap_or_else(|| TrueRandomGen::new(seed)),
+            rng: rng.unwrap_or_else(|| Rc::new(RefCell::new(TrueRandomGen::new(seed)))),
             active: true,
             convinced: false,
             points: vec![F::ZERO; poly_num_variables],
@@ -106,7 +107,7 @@ where
     }
 
     fn random_r(&mut self) -> F {
-        self.rng.get_random_element()
+        self.rng.borrow_mut().get_random_element()
     }
 
     fn soundness_error(&self) -> f64 {

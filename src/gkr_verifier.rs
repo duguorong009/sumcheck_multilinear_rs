@@ -1,10 +1,10 @@
-use std::collections::HashMap;
+use std::{cell::RefCell, collections::HashMap, rc::Rc};
 
 use halo2curves::ff::PrimeField;
 
 use crate::{
     gkr::GKR,
-    ip_pmf_verifier::{InteractivePMFVerifier, TrueRandomGen},
+    ip_pmf_verifier::{InteractivePMFVerifier, RandomGen},
     multilinear_extension::{evaluate, evaluate_sparse},
     pmf::PMF,
     polynomial::MVLinear,
@@ -18,10 +18,9 @@ pub enum GKRVerifierState {
     REJECT,
 }
 
-#[derive(Debug)]
 pub struct GKRVerifier<F: PrimeField + Clone> {
     pub(crate) state: GKRVerifierState,
-    rng: Option<TrueRandomGen>,
+    rng: Option<Rc<RefCell<dyn RandomGen<F>>>>,
     f1: HashMap<usize, F>,
     f2: Vec<F>,
     f3: Vec<F>,
@@ -36,7 +35,12 @@ impl<F> GKRVerifier<F>
 where
     F: PrimeField + Clone,
 {
-    pub fn new(gkr: GKR<F>, g: Vec<F>, asserted_sum: F, rng: Option<TrueRandomGen>) -> Self {
+    pub fn new(
+        gkr: GKR<F>,
+        g: Vec<F>,
+        asserted_sum: F,
+        rng: Option<Rc<RefCell<dyn RandomGen<F>>>>,
+    ) -> Self {
         Self {
             state: GKRVerifierState::PhaseOneListening,
             rng: rng.clone(),
