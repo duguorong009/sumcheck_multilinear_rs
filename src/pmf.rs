@@ -1,11 +1,12 @@
 use std::{fmt::Display, ops::Mul};
 
 use halo2curves::ff::PrimeField;
+use serde::{Deserialize, Serialize};
 
 use crate::polynomial::MVLinear;
 
 /// Product of multilinear functions.
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct PMF<F>
 where
     F: PrimeField + Clone,

@@ -8,10 +8,11 @@ use rand::{
     distributions::{Distribution, Uniform},
     Rng,
 };
+use serde::{Deserialize, Serialize};
 
 use crate::pmf::PMF;
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 /// A Sparse Representation of a multi-linear polynomial.
 pub struct MVLinear<F>
 where

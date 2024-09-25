@@ -1,6 +1,6 @@
 use std::{cell::RefCell, rc::Rc};
 
-use halo2curves::ff::PrimeField;
+use halo2curves::ff::{FromUniformBytes, PrimeField};
 
 use crate::{ip_pmf_verifier::{InteractivePMFVerifier, RandomGen}, pmf::PMF};
 
@@ -12,10 +12,23 @@ const MAX_ALLOWED_SOUNDNESS_ERROR: f64 = 2e-64;
 ///  :param proverMessage: List of messages [P(0), P(1), P(2), ..., P(m)]
 ///  :return:
 fn random_element<F>(poly: &PMF<F>, prover_message: &Vec<Vec<F>>) -> F where F: PrimeField + Clone {
-    // let hash_size = (F::NUM_BITS + 7) / 8;
-    // let byte_length = hash_size;
+    let hash_size = (F::NUM_BITS as usize + 7) / 8;
 
-    todo!()
+    let mut sha = blake2b_simd::Params::new().hash_length(hash_size).to_state();
+    sha.update(&serde_json::to_vec(poly).unwrap());
+    for msg in prover_message {
+        for &point in msg {
+            sha.update(b"N");
+            sha.update(&point.to_repr().as_ref());
+        }
+        sha.update(b"X");
+    }
+    let mut result = F::from_repr(sha.finalize().as_bytes().into()).unwrap();
+    // while result >= poly.p {
+    //     sha.update(b"\xFF");
+    //     result = i32::from_le_bytes(sha.finalize().try_into().unwrap());
+    // }
+    result
 }
 
 #[derive(Debug, Clone)]
