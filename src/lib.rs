@@ -1,3 +1,4 @@
+mod fs_pmf_prover;
 mod fs_pmf_verifier;
 mod gkr;
 mod gkr_prover;
