@@ -19,7 +19,6 @@ pub fn generate_theorem_and_proof<F>(
 where
     F: PrimeField + Clone,
 {
-    // unimplemented!("generate_theorem_and_proof")
     let pv = InteractivePMFProver::new(poly.clone());
     let (As, s) = pv.calculate_all_bookkeeping_tables();
 
@@ -36,4 +35,22 @@ where
     let theorem = Theorem::new(poly, s);
     let proof = Proof::new(msgs);
     (theorem, proof, v)
+}
+
+#[cfg(test)]
+mod test {
+    use super::*;
+
+    use crate::{fs_pmf_verifier::verify_proof, polynomial::random_mvlinear};
+
+    use halo2curves::bn256::Fr;
+    
+    #[test]
+    fn test_completeness() {
+        for _ in 0..100 {
+            let p = PMF::<Fr>::new(vec![random_mvlinear(7); 5]);
+            let (theorem, proof, _) = generate_theorem_and_proof(p);
+            assert!(verify_proof(&theorem, &proof, None));
+        }
+    }
 }
