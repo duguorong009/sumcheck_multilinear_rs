@@ -71,8 +71,8 @@ pub struct Theorem<F>
 where
     F: PrimeField + Clone,
 {
-    poly: PMF<F>,
-    asserted_sum: F,
+    pub(crate) poly: PMF<F>,
+    pub(crate) asserted_sum: F,
 }
 
 impl<F> Theorem<F>
@@ -89,7 +89,7 @@ pub struct Proof<F>
 where
     F: PrimeField + Clone,
 {
-    prover_message: Vec<Vec<F>>,
+    pub(crate) prover_message: Vec<Vec<F>>,
 }
 
 impl<F> Proof<F>
