@@ -7,7 +7,7 @@ use crate::{
 
 /// A linear honest prover of sum-check protocol for product of multilinear polynomials using dynamic programming.
 #[derive(Debug)]
-struct InteractivePMFProver<F>
+pub struct InteractivePMFProver<F>
 where
     F: PrimeField + Clone,
 {
@@ -30,7 +30,7 @@ where
     pub fn attempt_prove(
         &self,
         mut As: Vec<Vec<F>>,
-        mut verifier: InteractivePMFVerifier<F>,
+        verifier: &mut InteractivePMFVerifier<F>,
         gen: &mut Option<PseudoRandomGen<F>>,
     ) -> Vec<Vec<F>> {
         let l = self.poly.num_variables;
@@ -125,8 +125,8 @@ mod tests {
             let p = PMF::<Fr>::new(vec![random_mvlinear(7); 5]);
             let pv = InteractivePMFProver::new(p.clone());
             let (As, s) = pv.calculate_all_bookkeeping_tables();
-            let v = InteractivePMFVerifier::new(p, s, None, None, None);
-            let _ = pv.attempt_prove(As, v, &mut None);
+            let mut v = InteractivePMFVerifier::new(p, s, None, None, None);
+            let _ = pv.attempt_prove(As, &mut v, &mut None);
         }
     }
 }
