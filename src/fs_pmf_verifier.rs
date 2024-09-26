@@ -101,7 +101,7 @@ where
     }
 }
 
-fn verify_proof<F>(
+pub fn verify_proof<F>(
     theorem: &Theorem<F>,
     proof: &Proof<F>,
     max_allowed_soundness_error: Option<f64>,
