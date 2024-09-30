@@ -202,46 +202,14 @@ where
         self.convinced = false;
         self.active = false;
     }
-
-    // TODO: Should implement the "_repr_html_" method ???
 }
 
-// // modular inverse (https://www.geeksforgeeks.org/multiplicative-inverse-under-modulo-m/)
-// //     :param a: a
-// //     :param m: prime
-// //     :return: a^-1 mod p
-// fn mod_inverse(a: u64, m: u64) -> u64 {
-//     let m0: i128 = m.into();
-//     let mut y: i128 = 0;
-//     let mut x: i128 = 1;
-
-//     if m == 1 {
-//         return 0;
-//     }
-
-//     let mut m: i128 = m.into();
-//     let mut a: i128 = a.into();
-//     while a > 1 {
-//         let q = a / m;
-//         let mut t: i128 = m;
-//         m = a % m;
-//         a = t;
-//         t = y;
-//         y = x - q * y;
-//         x = t;
-//     }
-//     if x < 0 {
-//         x += m0;
-//     }
-//     x.try_into().unwrap()
-// }
-
-///Interpolate and evaluate a PMF.
-// Adapted from https://www.geeksforgeeks.org/lagranges-interpolation/
-// :param points: P_0, P_1, P_2, ..., P_m where P is the product of m multilinear polynomials
-// :param r: The point we want to evaluate at. In this scenario, the verifier wants to evaluate p_r.
-// :param p: Field size.
-// :return: P_r
+/// Interpolate and evaluate a PMF.
+/// Adapted from https://www.geeksforgeeks.org/lagranges-interpolation/
+///  :param points: P_0, P_1, P_2, ..., P_m where P is the product of m multilinear polynomials
+///  :param r: The point we want to evaluate at. In this scenario, the verifier wants to evaluate p_r.
+///  :param p: Field size.
+///  :return: P_r
 fn interpolate<F: PrimeField + Clone>(points: &[F], r: F) -> F {
     let mut result = F::ZERO;
     for i in 0..points.len() {

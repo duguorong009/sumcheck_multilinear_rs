@@ -74,39 +74,6 @@ where
     }
 }
 
-// #[derive(Debug, Clone)]
-// pub struct DummyPMF {
-//     num_multiplicands: usize,
-//     num_variables: usize,
-//     pub(crate) p: u64,
-// }
-
-// impl DummyPMF {
-//     pub fn new(num_multiplicands: usize, num_variables: usize, p: u64) -> DummyPMF {
-//         let _pmf: PMF = PMF::new(vec![MVLinear::new(num_variables, vec![], p)]);
-//         DummyPMF {
-//             num_multiplicands,
-//             num_variables,
-//             p,
-//         }
-//     }
-
-//     pub fn num_multiplicands(&self) -> usize {
-//         self.num_multiplicands
-//     }
-
-//     pub fn eval(&self, _at: &[u64]) -> u64 {
-//         unimplemented!("Dummy PMF Evaluated.")
-//     }
-// }
-
-// impl Mul<MVLinear> for DummyPMF {
-//     type Output = DummyPMF;
-//     fn mul(self, _rhs: MVLinear) -> DummyPMF {
-//         unimplemented!("Dummy PMF");
-//     }
-// }
-
 #[cfg(test)]
 mod tests {
     use super::*;
