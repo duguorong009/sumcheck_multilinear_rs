@@ -44,7 +44,7 @@ mod test {
     use crate::{fs_pmf_verifier::verify_proof, polynomial::random_mvlinear};
 
     use halo2curves::bn256::Fr;
-    
+
     #[test]
     fn test_completeness() {
         for _ in 0..100 {
