@@ -61,6 +61,7 @@ where
     F: PrimeField + Clone,
 {
     fn get_random_element(&mut self) -> F {
+        // TODO: implement `random_element` since it is Fiat-Shamir transform which should absorb the message.
         // random_element(&self.poly, &self.message)
         F::random(OsRng)
     }
