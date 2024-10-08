@@ -377,7 +377,7 @@ mod tests {
         for i in 0..(1 << (2 * l)) {
             let x = i & ((1 << l) - 1);
             let y = (i & (((1 << l) - 1) << l)) >> l;
-            a_hg_expected[x] = (a_hg_expected[x] + f1_fix_g.eval_bin(i) * a_f3[y]);
+            a_hg_expected[x] += f1_fix_g.eval_bin(i) * a_f3[y];
         }
         let (a_hg_actual, G) = initialize_phase_one(&d_f1, l, &a_f3, &g);
         for i in 0..(1 << l) {
